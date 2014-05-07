@@ -1,5 +1,5 @@
 #include "animation.hpp"
-#include <functional>
+#include <iostream>
 
 namespace animation_engine
 {
@@ -12,38 +12,70 @@ namespace animation_engine
     //
     ///////////////////////////////////////////////////////////////////
 
-    animation_functions::animation_functions(const sf::Vector2f& p_begin,
-                                             const sf::Vector2f& p_end)
+    int animation_functions::calculate_interpolation(std::vector<sf::Vector2f>& object_positions,
+                                                     const sf::Vector2f& p_begin,
+                                                     const sf::Vector2f& p_end)
     {
+        object_positions.clear();
         x_beg=p_begin.x;
         y_beg=p_begin.y;
         x_end=p_end.x;
         y_end=p_end.y;
-    }
-
-    int animation_functions::calculate_interpolation(std::vector<sf::Vector2f>& object_positions)
-    {
+        if((x_end-x_beg)==0)
+        {
+            return 0;
+        }
         //y=mx+q
         using std::abs;
-        double m=(y_end-y_beg)/
-                 (x_end-x_beg);
-        auto func=[&](int x)
+        m=(y_end-y_beg)/(x_end-x_beg);
+        if(abs(x_end-x_beg)>abs(y_end-y_beg))
+        {
+            x_axis_interpolation(object_positions);
+        }
+        else
+        {
+            y_axis_interpolation(object_positions);
+        }
+
+        return object_positions.size();
+    }
+
+    void animation_functions::x_axis_interpolation(std::vector<sf::Vector2f>& elems)
+    {
+        auto get_y=[&](int x)
         {
             return m*(x-x_end)+y_end;
         };
-        //Include both the begin and end position
         int cur_x=x_beg;
         while(cur_x!=x_end)
         {
-            int cur_y=func(cur_x);
-            object_positions.push_back(sf::Vector2f(cur_x,cur_y));
+            int cur_y=get_y(cur_x);
+            elems.push_back(sf::Vector2f(cur_x,cur_y));
             if(cur_x>x_end)
                 --cur_x;
             else ++cur_x;
         }
-        object_positions.push_back(sf::Vector2f(x_end,y_end));
-        return object_positions.size();
+        elems.push_back(sf::Vector2f(x_end,y_end));
     }
+
+    void animation_functions::y_axis_interpolation(std::vector<sf::Vector2f>& elems)
+    {
+        auto get_x=[&](int y)
+        {
+            return ((y-y_end)/m)+x_end;
+        };
+        int cur_y=y_beg;
+        while(cur_y!=y_end)
+        {
+            int cur_x=get_x(cur_y);
+            elems.push_back(sf::Vector2f(cur_x,cur_y));
+            if(cur_y>y_end)
+                --cur_y;
+            else ++cur_y;
+        }
+        elems.push_back(sf::Vector2f(x_end,y_end));
+    }
+
 
     ///////////////////////////////////////////////////////////////////
     //
@@ -54,27 +86,80 @@ namespace animation_engine
     ///////////////////////////////////////////////////////////////////
 
     //Create an empty sprite pointer
-    animated_object animated_object::create(const sf::Sprite& p_sprite) throw(std::bad_alloc)
+    anim_obj_ptr animated_object::create(const sf::Sprite& p_sprite) throw(std::bad_alloc)
     {
         sprite_ptr_t sprite_ptr=std::make_shared<sf::Sprite>(p_sprite);
-        animated_object new_object(sprite_ptr);
+        anim_obj_ptr new_object(new animated_object(sprite_ptr));
         return new_object;
     }
 
     animated_object::animated_object(sprite_ptr_t p_sprite)
     {
+        functions=std::make_shared<animation_functions>();
         m_sprite=p_sprite;
+        m_begin_position=m_sprite->getPosition();
     }
 
     void animated_object::set_frame_rate(int p_frame_rate)
     {
         m_frame_rate=p_frame_rate;
-        functions->calculate_interpolation(object_positions);
+    }
+
+    sf::Vector2f animated_object::get_position() throw(std::out_of_range)
+    {
+        return object_positions.at(m_current_position);
+    }
+
+    sprite_ptr_t animated_object::get_sprite()
+    {
+        return m_sprite;
+    }
+
+    //This will change the position of the sprite as well
+    sf::Vector2f animated_object::set_begin_position(const sf::Vector2f& position)
+    {
+        sf::Vector2f last_begin_pos=m_sprite->getPosition();
+        m_sprite->setPosition(position);
+        m_begin_position=position;
+        return last_begin_pos;
+    }
+
+    sf::Vector2f animated_object::set_end_position(const sf::Vector2f& new_position)
+    {
+        sf::Vector2f last_end_position=m_end_position;
+        m_end_position=new_position;
+        return last_end_position;
     }
 
     void animated_object::frame_tick(sf::RenderWindow& p_rnd)
     {
+        if(m_status==anim_obj_status::NOT_READY) return;
+        if(m_current_position>=object_positions.size())
+        {
+            return;
+        }
+        m_sprite->setPosition(object_positions[m_current_position]);
+        ++m_current_position;
+        //Draw the sprite
+        p_rnd.draw(*m_sprite);
+    }
 
+    anim_obj_status animated_object::prepare_to_render()
+    {
+        m_status=anim_obj_status::READY;
+        //Check if the sprite has a valid texture
+        if(m_sprite->getTexture()==nullptr)
+        {
+            m_status=anim_obj_status::NOT_READY;
+        }
+        int num=functions->calculate_interpolation(object_positions,m_begin_position,
+                                                    m_end_position);
+        if(num==0)
+        {
+            m_status=anim_obj_status::NOT_READY;
+        }
+        m_current_position=0;
+        return m_status;
     }
 
     ///////////////////////////////////////////////////////////////////
