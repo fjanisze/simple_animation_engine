@@ -67,6 +67,32 @@ TEST_F(animation_functions_tests,first_test)
     ASSERT_EQ(get_y(positions[150].x),positions[150].y);
 }
 
+class animation_functions_tests_use_y : public ::testing::Test
+{
+public:
+    animation_engine::animation_functions functions;
+    sf::Vector2f begin_position{-4,7};
+    sf::Vector2f end_position{-1,-6};
+    animation_functions_tests_use_y()
+    {
+    }
+};
+
+TEST_F(animation_functions_tests_use_y,first_test)
+{
+    std::vector<sf::Vector2f> positions;
+    ASSERT_EQ(14,functions.calculate_interpolation(positions,begin_position,end_position));
+    //Check the limit values
+    ASSERT_EQ(-4,positions[0].x);
+    ASSERT_EQ(7,positions[0].y);
+    ASSERT_EQ(-1,positions.back().x);
+    ASSERT_EQ(-6,positions.back().y);
+    //Check some values in the middle
+    ASSERT_EQ(-3,positions[2].x);
+    ASSERT_EQ(-2,positions[5].x);
+    ASSERT_EQ(-1,positions[10].x);
+}
+
 class animated_object_basic : public ::testing::Test
 {
 public:
