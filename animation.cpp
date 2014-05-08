@@ -21,13 +21,16 @@ namespace animation_engine
         y_beg=p_begin.y;
         x_end=p_end.x;
         y_end=p_end.y;
+        //y=mx+q
         if((x_end-x_beg)==0)
         {
-            return 0;
+            m=0;
         }
-        //y=mx+q
+        else
+        {
+            m=(y_end-y_beg)/(x_end-x_beg);
+        }
         using std::abs;
-        m=(y_end-y_beg)/(x_end-x_beg);
         if(abs(x_end-x_beg)>abs(y_end-y_beg))
         {
             x_axis_interpolation(object_positions);
@@ -62,7 +65,7 @@ namespace animation_engine
     {
         auto get_x=[&](int y)
         {
-            return ((y-y_end)/m)+x_end;
+            return m!=0?((y-y_end)/m)+x_end:x_end;
         };
         int cur_y=y_beg;
         while(cur_y!=y_end)

@@ -47,6 +47,8 @@ public:
     animation_engine::animation_functions functions;
     sf::Vector2f begin_position{-50,33};
     sf::Vector2f end_position{120,-60};
+    sf::Vector2f begin_position2{0,0};
+    sf::Vector2f end_position2{0,0};
     animation_functions_tests()
     {
     }
@@ -67,12 +69,21 @@ TEST_F(animation_functions_tests,first_test)
     ASSERT_EQ(get_y(positions[150].x),positions[150].y);
 }
 
+TEST_F(animation_functions_tests,try_zero_positions)
+{
+    std::vector<sf::Vector2f> positions;
+    ASSERT_EQ(1,functions.calculate_interpolation(positions,begin_position2,end_position2));
+}
+
+
 class animation_functions_tests_use_y : public ::testing::Test
 {
 public:
     animation_engine::animation_functions functions;
     sf::Vector2f begin_position{-4,7};
     sf::Vector2f end_position{-1,-6};
+    sf::Vector2f begin_position2{0,50};
+    sf::Vector2f end_position2{0,-50};
     animation_functions_tests_use_y()
     {
     }
@@ -91,6 +102,64 @@ TEST_F(animation_functions_tests_use_y,first_test)
     ASSERT_EQ(-3,positions[2].x);
     ASSERT_EQ(-2,positions[5].x);
     ASSERT_EQ(-1,positions[10].x);
+}
+
+TEST_F(animation_functions_tests_use_y,second_test_x_is_zero)
+{
+    std::vector<sf::Vector2f> positions;
+    ASSERT_EQ(101,functions.calculate_interpolation(positions,begin_position2,end_position2));
+    //Check the limit values
+    ASSERT_EQ(0,positions[0].x);
+    ASSERT_EQ(50,positions[0].y);
+    ASSERT_EQ(0,positions.back().x);
+    ASSERT_EQ(-50,positions.back().y);
+    //Check some values in the middle
+    ASSERT_EQ(40,positions[10].y);
+    ASSERT_EQ(20,positions[30].y);
+    ASSERT_EQ(-20,positions[70].y);
+}
+
+class animation_functions_tests_use_x : public ::testing::Test
+{
+public:
+    animation_engine::animation_functions functions;
+    sf::Vector2f begin_position{-4,0};
+    sf::Vector2f end_position{7,0};
+    sf::Vector2f begin_position2{50,0};
+    sf::Vector2f end_position2{-50,0};
+    animation_functions_tests_use_x()
+    {
+    }
+};
+
+TEST_F(animation_functions_tests_use_x,first_test)
+{
+    std::vector<sf::Vector2f> positions;
+    ASSERT_EQ(12,functions.calculate_interpolation(positions,begin_position,end_position));
+    //Check the limit values
+    ASSERT_EQ(-4,positions[0].x);
+    ASSERT_EQ(0,positions[0].y);
+    ASSERT_EQ(7,positions.back().x);
+    ASSERT_EQ(0,positions.back().y);
+    //Check some values in the middle
+    ASSERT_EQ(-2,positions[2].x);
+    ASSERT_EQ(1,positions[5].x);
+    ASSERT_EQ(6,positions[10].x);
+}
+
+TEST_F(animation_functions_tests_use_x,second_test_x_is_zero)
+{
+    std::vector<sf::Vector2f> positions;
+    ASSERT_EQ(101,functions.calculate_interpolation(positions,begin_position2,end_position2));
+    //Check the limit values
+    ASSERT_EQ(50,positions[0].x);
+    ASSERT_EQ(0,positions[0].y);
+    ASSERT_EQ(-50,positions.back().x);
+    ASSERT_EQ(0,positions.back().y);
+    //Check some values in the middle
+    ASSERT_EQ(40,positions[10].x);
+    ASSERT_EQ(20,positions[30].x);
+    ASSERT_EQ(-20,positions[70].x);
 }
 
 class animated_object_basic : public ::testing::Test
@@ -140,7 +209,7 @@ int main()
 {
     sf::RenderWindow app;
     app.create(sf::VideoMode(800, 600), "animation");
-    app.setFramerateLimit(150);
+    app.setFramerateLimit(60);
 
     sf::Texture texture;
     if(!texture.loadFromFile("texture.png"))
