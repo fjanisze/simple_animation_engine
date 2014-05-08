@@ -16,6 +16,14 @@ namespace animation_engine
                                                      const sf::Vector2f& p_begin,
                                                      const sf::Vector2f& p_end)
     {
+        auto get_y=[&](int x)
+        {
+            return m*(x-x_end)+y_end;
+        };
+        auto get_x=[&](int y)
+        {
+            return m!=0?((y-y_end)/m)+x_end:x_end;
+        };
         object_positions.clear();
         x_beg=p_begin.x;
         y_beg=p_begin.y;
@@ -33,48 +41,35 @@ namespace animation_engine
         using std::abs;
         if(abs(x_end-x_beg)>abs(y_end-y_beg))
         {
-            x_axis_interpolation(object_positions);
+
+            interpolation_impl(object_positions,
+                              get_y,
+                              [&object_positions](int a,int b){object_positions.push_back(sf::Vector2f(a,b));},
+                              x_beg,x_end);
         }
         else
         {
-            y_axis_interpolation(object_positions);
+            interpolation_impl(object_positions,
+                               get_x,
+                               [&object_positions](int a,int b){object_positions.push_back(sf::Vector2f(b,a));},
+                               y_beg,y_end);
         }
 
         return object_positions.size();
     }
 
-    void animation_functions::x_axis_interpolation(std::vector<sf::Vector2f>& elems)
+    void animation_functions::interpolation_impl(std::vector<sf::Vector2f>& elems,
+                                                std::function<int(int)> func,
+                                                std::function<void(int,int)> push,
+                                                int from,int to)
     {
-        auto get_y=[&](int x)
+        while(from!=to)
         {
-            return m*(x-x_end)+y_end;
-        };
-        int cur_x=x_beg;
-        while(cur_x!=x_end)
-        {
-            int cur_y=get_y(cur_x);
-            elems.push_back(sf::Vector2f(cur_x,cur_y));
-            if(cur_x>x_end)
-                --cur_x;
-            else ++cur_x;
-        }
-        elems.push_back(sf::Vector2f(x_end,y_end));
-    }
-
-    void animation_functions::y_axis_interpolation(std::vector<sf::Vector2f>& elems)
-    {
-        auto get_x=[&](int y)
-        {
-            return m!=0?((y-y_end)/m)+x_end:x_end;
-        };
-        int cur_y=y_beg;
-        while(cur_y!=y_end)
-        {
-            int cur_x=get_x(cur_y);
-            elems.push_back(sf::Vector2f(cur_x,cur_y));
-            if(cur_y>y_end)
-                --cur_y;
-            else ++cur_y;
+            int cur=func(from);
+            push(from,cur);
+            if(from>to)
+                --from;
+            else ++from;
         }
         elems.push_back(sf::Vector2f(x_end,y_end));
     }

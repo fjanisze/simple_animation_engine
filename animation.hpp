@@ -18,13 +18,17 @@ namespace animation_engine
      */
     class animation_functions
     {
-        double x_beg,
-               y_beg,
-               x_end,
-               y_end,
-               m;
+        double x_beg{0},
+               y_beg{0},
+               x_end{0},
+               y_end{0},
+               m{0};
         void x_axis_interpolation(std::vector<sf::Vector2f>& elems);
         void y_axis_interpolation(std::vector<sf::Vector2f>& elems);
+        void interpolation_impl(std::vector<sf::Vector2f>& elems,
+                               std::function<int(int)> func,
+                               std::function<void(int,int)> push,
+                               int from,int to);
     public:
         int calculate_interpolation(std::vector<sf::Vector2f>& object_positions,
                                     const sf::Vector2f& p_begin,
