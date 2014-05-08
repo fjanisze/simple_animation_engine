@@ -14,9 +14,21 @@ namespace animation_engine
     using sprite_ptr_t=std::shared_ptr<sf::Sprite>;
 
     /*
+     * Interface for the class containing the interpolation algorithms
+     */
+    class I_interpolation_algorithm
+    {
+    public:
+        virtual int calculate_interpolation(std::vector<sf::Vector2f>& object_positions,
+                                            const sf::Vector2f& p_begin,
+                                            const sf::Vector2f& p_end,
+                                            float p_anim_speed = 0.1) = 0;
+    };
+
+    /*
      * Implement a set of function needed for the animation
      */
-    class animation_functions
+    class linear_interpolation : public I_interpolation_algorithm
     {
         double x_beg{0},
                y_beg{0},
@@ -24,19 +36,15 @@ namespace animation_engine
                y_end{0},
                m{0};
         float m_anim_speed{.1};
-        void x_axis_interpolation(std::vector<sf::Vector2f>& elems);
-        void y_axis_interpolation(std::vector<sf::Vector2f>& elems);
         void interpolation_impl(std::vector<sf::Vector2f>& elems,
                                std::function<int(int)> func,
                                std::function<void(int,int)> push,
                                int from,int to);
     public:
-        animation_functions()=default;
-        animation_functions(float p_anim_speed):m_anim_speed(p_anim_speed)
-        {}
         int calculate_interpolation(std::vector<sf::Vector2f>& object_positions,
                                     const sf::Vector2f& p_begin,
-                                    const sf::Vector2f& p_end);
+                                    const sf::Vector2f& p_end,
+                                    float p_anim_speed = 0.1);
     };
 
     //Possible state for the animated_object class
@@ -64,9 +72,10 @@ namespace animation_engine
 
         int m_frame_rate{0};
         float m_anim_speed{0.1};
-        std::shared_ptr<animation_functions> functions;
+        std::shared_ptr<I_interpolation_algorithm> functions;
     public:
-        animated_object(sprite_ptr_t p_sprite);
+        animated_object(sprite_ptr_t p_sprite,
+                        std::shared_ptr<I_interpolation_algorithm> interpolation=std::shared_ptr<linear_interpolation>(new linear_interpolation));
 
         void frame_tick(sf::RenderWindow& p_rnd); //A new frame may be rendered
         void set_frame_rate(int p_frame_rate);

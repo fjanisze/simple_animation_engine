@@ -12,10 +12,15 @@ namespace animation_engine
     //
     ///////////////////////////////////////////////////////////////////
 
-    int animation_functions::calculate_interpolation(std::vector<sf::Vector2f>& object_positions,
+    int linear_interpolation::calculate_interpolation(std::vector<sf::Vector2f>& object_positions,
                                                      const sf::Vector2f& p_begin,
-                                                     const sf::Vector2f& p_end)
+                                                     const sf::Vector2f& p_end,
+                                                     float p_anim_speed)
     {
+        if(p_anim_speed>=0.1)
+        {
+            m_anim_speed=p_anim_speed;
+        }
         auto get_y=[&](int x)
         {
             return m*(x-x_end)+y_end;
@@ -58,7 +63,7 @@ namespace animation_engine
         return object_positions.size();
     }
 
-    void animation_functions::interpolation_impl(std::vector<sf::Vector2f>& elems,
+    void linear_interpolation::interpolation_impl(std::vector<sf::Vector2f>& elems,
                                                 std::function<int(int)> func,
                                                 std::function<void(int,int)> push,
                                                 int from,int to)
@@ -98,9 +103,10 @@ namespace animation_engine
         return new_object;
     }
 
-    animated_object::animated_object(sprite_ptr_t p_sprite)
+    animated_object::animated_object(sprite_ptr_t p_sprite,
+                                     std::shared_ptr<I_interpolation_algorithm> interpolation)
     {
-        functions=std::make_shared<animation_functions>(m_anim_speed);
+        functions=interpolation;
         m_sprite=p_sprite;
         m_begin_position=m_sprite->getPosition();
     }
@@ -167,7 +173,7 @@ namespace animation_engine
             m_status=anim_obj_status::NOT_READY;
         }
         int num=functions->calculate_interpolation(object_positions,m_begin_position,
-                                                    m_end_position);
+                                                    m_end_position,m_anim_speed);
         if(num==0)
         {
             m_status=anim_obj_status::NOT_READY;
