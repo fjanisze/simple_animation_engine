@@ -3,7 +3,7 @@
 #include <chrono>
 #include <sstream>
 
-#define RUN_REGRESSION
+//#define RUN_REGRESSION
 
 class animation_functions_test_small : public ::testing::Test
 {

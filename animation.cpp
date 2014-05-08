@@ -63,13 +63,20 @@ namespace animation_engine
                                                 std::function<void(int,int)> push,
                                                 int from,int to)
     {
-        while(from!=to)
+        int num_of_elements=std::abs(to-from);
+        while(num_of_elements>0)
         {
             int cur=func(from);
             push(from,cur);
             if(from>to)
-                --from;
-            else ++from;
+            {
+                from-=(m_anim_speed*10);
+            }
+            else
+            {
+                from+=(m_anim_speed*10);
+            }
+            num_of_elements-=(m_anim_speed*10);
         }
         elems.push_back(sf::Vector2f(x_end,y_end));
     }
@@ -93,7 +100,7 @@ namespace animation_engine
 
     animated_object::animated_object(sprite_ptr_t p_sprite)
     {
-        functions=std::make_shared<animation_functions>();
+        functions=std::make_shared<animation_functions>(m_anim_speed);
         m_sprite=p_sprite;
         m_begin_position=m_sprite->getPosition();
     }
@@ -101,6 +108,15 @@ namespace animation_engine
     void animated_object::set_frame_rate(int p_frame_rate)
     {
         m_frame_rate=p_frame_rate;
+    }
+
+    float animated_object::set_animation_speed(float p_speed)
+    {
+        if(p_speed>=0.1)
+        {
+            m_anim_speed=p_speed;
+        }
+        return m_anim_speed;
     }
 
     sf::Vector2f animated_object::get_position() throw(std::out_of_range)
