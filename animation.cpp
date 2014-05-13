@@ -111,11 +111,6 @@ namespace animation_engine
         m_begin_position=m_sprite->getPosition();
     }
 
-    void animated_object::set_frame_rate(int p_frame_rate)
-    {
-        m_frame_rate=p_frame_rate;
-    }
-
     float animated_object::set_animation_speed(float p_speed)
     {
         if(p_speed>=0.1)
@@ -125,7 +120,7 @@ namespace animation_engine
         return m_anim_speed;
     }
 
-    sf::Vector2f animated_object::get_position() throw(std::out_of_range)
+    sf::Vector2f animated_object::get_position()
     {
         return object_positions.at(m_current_position);
     }
@@ -197,7 +192,6 @@ namespace animation_engine
 
     int animation_engine::register_object(anim_obj_ptr obj)
     {
-        obj->set_frame_rate(m_frame_rate);
         object_container.push_back(obj);
         return object_container.size();
     }

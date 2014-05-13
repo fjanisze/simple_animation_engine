@@ -3,7 +3,7 @@
 #include <chrono>
 #include <sstream>
 
-//#define RUN_REGRESSION
+#define RUN_REGRESSION
 
 class linear_interpolation_test_small : public ::testing::Test
 {
@@ -195,6 +195,51 @@ TEST_F(animated_object_basic,build_and_set_proper_values)
     ASSERT_EQ(anim_obj_status::READY,animated_object->prepare_to_render());
 }
 
+namespace helper_objects
+{
+    struct animated_object_mock : public I_animate_object
+    {
+        MOCK_METHOD1(frame_tick,void(sf::RenderWindow&));
+        MOCK_METHOD0(prepare_to_render,anim_obj_status());
+        MOCK_METHOD1(set_animation_speed,float(float));
+
+        MOCK_METHOD0(get_position,sf::Vector2f());
+        MOCK_METHOD1(set_begin_position,sf::Vector2f(const sf::Vector2f&));
+        MOCK_METHOD1(set_end_position,sf::Vector2f(const sf::Vector2f&));
+
+        MOCK_METHOD0(get_sprite,sprite_ptr_t());
+    };
+}
+
+using ::testing::_;
+
+struct animation_engine_testsuit : public ::testing::Test
+{
+    typedef std::shared_ptr<helper_objects::animated_object_mock> anim_obj_mock_ptr;
+
+    sf::RenderWindow render_window;
+    anim_obj_mock_ptr anim_obj1,
+                      anim_obj2;
+    animation_engine_testsuit()
+    {
+        anim_obj1=std::shared_ptr<helper_objects::animated_object_mock>(new helper_objects::animated_object_mock);
+        anim_obj2=std::shared_ptr<helper_objects::animated_object_mock>(new helper_objects::animated_object_mock);
+    }
+};
+
+TEST_F(animation_engine_testsuit,create_2anim_obj_and_draw)
+{
+    animation_engine::animation_engine engine(render_window,40);
+    ASSERT_EQ(1,engine.register_object(anim_obj1));
+    ASSERT_EQ(2,engine.register_object(anim_obj2));
+    ASSERT_EQ(3,engine.register_object(anim_obj2));
+
+    EXPECT_CALL(*anim_obj1,frame_tick(_)).Times(1);
+    EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
+
+    engine.draw();
+}
+
 #ifdef RUN_REGRESSION
 
 int main(int argc,char** argv)
@@ -219,6 +264,7 @@ int main()
 
     sf::Sprite sprite(texture);
     animation_engine::anim_obj_ptr object=animation_engine::animated_object::create(sprite);
+    object->set_animation_speed(1);
 
     bool begin_point_ready=false;
 
