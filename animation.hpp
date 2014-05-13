@@ -16,12 +16,18 @@ namespace animation_engine
         NOT_READY, //Not ready...
     };
 
+    /*
+     * The object which can be animated on the screen,
+     * the starting and ending position need to be provided,
+     * and the moving speed. By default the object moves straight
+     * from the initial position to the end position.
+     */
     class I_animate_object
     {
     public:
         virtual void frame_tick(sf::RenderWindow& p_rnd)=0;
         virtual anim_obj_status prepare_to_render()=0;
-        virtual float set_animation_speed(float p_speed)=0;
+        virtual int set_animation_speed(int p_speed)=0;
 
         virtual sf::Vector2f get_position()=0;
         virtual sf::Vector2f set_begin_position(const sf::Vector2f& position)=0;
@@ -43,8 +49,7 @@ namespace animation_engine
     public:
         virtual int calculate_interpolation(std::vector<sf::Vector2f>& object_positions,
                                             const sf::Vector2f& p_begin,
-                                            const sf::Vector2f& p_end,
-                                            float p_anim_speed = 0.1) = 0;
+                                            const sf::Vector2f& p_end) = 0;
     };
 
     /*
@@ -57,24 +62,17 @@ namespace animation_engine
                x_end{0},
                y_end{0},
                m{0};
-        float m_anim_speed{.1};
         void interpolation_impl(std::vector<sf::Vector2f>& elems,
                                std::function<int(int)> func,
                                std::function<void(int,int)> push,
                                int from,int to);
+
     public:
         int calculate_interpolation(std::vector<sf::Vector2f>& object_positions,
                                     const sf::Vector2f& p_begin,
-                                    const sf::Vector2f& p_end,
-                                    float p_anim_speed = 0.1);
+                                    const sf::Vector2f& p_end);
     };
 
-    /*
-     * The object which can be animated on the screen,
-     * the starting and ending position need to be provided,
-     * and the moving speed. By default the object moves straight
-     * from the initial position to the end position.
-     */
 
     class animated_object : public I_animate_object
     {
@@ -85,15 +83,24 @@ namespace animation_engine
 
         std::vector<sf::Vector2f> object_positions;
         int m_current_position{0};
+        sf::Vector2f get_current_position();
 
-        float m_anim_speed{0.1};
+        int m_anim_speed{100};
+        int frame_tick_count{-1};
+        int amount_of_tick_to_skip{0};
+        enum animation_speed_type
+        {
+            IS_NORMAL=0,
+            IS_SLOWER,
+            IS_FASTER
+        }animation_speed_info;
         std::shared_ptr<I_interpolation_algorithm> functions;
     public:
         animated_object(sprite_ptr_t p_sprite,
                         std::shared_ptr<I_interpolation_algorithm> interpolation=std::shared_ptr<linear_interpolation>(new linear_interpolation));
 
         void frame_tick(sf::RenderWindow& p_rnd); //A new frame may be rendered
-        float set_animation_speed(float p_speed);
+        int set_animation_speed(int p_speed);
 
         sf::Vector2f get_position();
         sf::Vector2f set_begin_position(const sf::Vector2f& position);

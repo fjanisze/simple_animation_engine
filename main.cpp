@@ -3,7 +3,7 @@
 #include <chrono>
 #include <sstream>
 
-#define RUN_REGRESSION
+//#define RUN_REGRESSION
 
 class linear_interpolation_test_small : public ::testing::Test
 {
@@ -201,7 +201,7 @@ namespace helper_objects
     {
         MOCK_METHOD1(frame_tick,void(sf::RenderWindow&));
         MOCK_METHOD0(prepare_to_render,anim_obj_status());
-        MOCK_METHOD1(set_animation_speed,float(float));
+        MOCK_METHOD1(set_animation_speed,int(int));
 
         MOCK_METHOD0(get_position,sf::Vector2f());
         MOCK_METHOD1(set_begin_position,sf::Vector2f(const sf::Vector2f&));
@@ -262,9 +262,11 @@ int main()
         return -1;
     }
 
+
     sf::Sprite sprite(texture);
     animation_engine::anim_obj_ptr object=animation_engine::animated_object::create(sprite);
-    object->set_animation_speed(1);
+
+    animation_engine::animation_engine engine(app,20);
 
     bool begin_point_ready=false;
 
@@ -294,6 +296,11 @@ int main()
                     {
                         object->set_end_position(sf::Vector2f(event.mouseButton.x,event.mouseButton.y));
                         object->prepare_to_render();
+                        object->set_animation_speed(90);
+                        engine.register_object(object);
+                        //Create a new one
+                        sf::Sprite sprite(texture);
+                        object=animation_engine::animated_object::create(sprite);
                         begin_point_ready=false;
                     }
                 }
@@ -305,7 +312,7 @@ int main()
         }
         app.clear(sf::Color::Black);
         auto time_now=std::chrono::high_resolution_clock::now();
-        object->frame_tick(app);
+        engine.draw();
         if(std::chrono::duration_cast<std::chrono::milliseconds>(time_now-begin_time)>=std::chrono::milliseconds{1000})
         {
             std::cout<<fps_counter<<std::endl;

@@ -14,13 +14,8 @@ namespace animation_engine
 
     int linear_interpolation::calculate_interpolation(std::vector<sf::Vector2f>& object_positions,
                                                      const sf::Vector2f& p_begin,
-                                                     const sf::Vector2f& p_end,
-                                                     float p_anim_speed)
+                                                     const sf::Vector2f& p_end)
     {
-        if(p_anim_speed>=0.1)
-        {
-            m_anim_speed=p_anim_speed;
-        }
         auto get_y=[&](int x)
         {
             return m*(x-x_end)+y_end;
@@ -74,14 +69,10 @@ namespace animation_engine
             int cur=func(from);
             push(from,cur);
             if(from>to)
-            {
-                from-=(m_anim_speed*10);
-            }
+                --from;
             else
-            {
-                from+=(m_anim_speed*10);
-            }
-            num_of_elements-=(m_anim_speed*10);
+                ++from;
+            --num_of_elements;
         }
         elems.push_back(sf::Vector2f(x_end,y_end));
     }
@@ -111,11 +102,28 @@ namespace animation_engine
         m_begin_position=m_sprite->getPosition();
     }
 
-    float animated_object::set_animation_speed(float p_speed)
+    int animated_object::set_animation_speed(int p_speed)
     {
-        if(p_speed>=0.1)
+        if((p_speed>=1)&&(p_speed<=199))
         {
             m_anim_speed=p_speed;
+            if(p_speed==100)
+            {
+                animation_speed_info=animation_speed_type::IS_NORMAL;
+            }
+            else
+            {
+                if(p_speed<100)
+                {
+                    animation_speed_info=animation_speed_type::IS_SLOWER;
+                    frame_tick_count=100-p_speed;
+                }
+                else
+                {
+                    animation_speed_info=animation_speed_type::IS_FASTER;
+                    frame_tick_count=p_speed-100;
+                }
+            }
         }
         return m_anim_speed;
     }
@@ -149,14 +157,51 @@ namespace animation_engine
     void animated_object::frame_tick(sf::RenderWindow& p_rnd)
     {
         if(m_status==anim_obj_status::NOT_READY) return;
-        if(m_current_position>=object_positions.size())
-        {
-            return;
-        }
-        m_sprite->setPosition(object_positions[m_current_position]);
-        ++m_current_position;
+        m_sprite->setPosition(get_current_position());
         //Draw the sprite
         p_rnd.draw(*m_sprite);
+    }
+
+    sf::Vector2f animated_object::get_current_position()
+    {
+        if(m_current_position>=object_positions.size())
+        {
+            return m_end_position;
+        }
+        //Look for the new position
+        sf::Vector2f position;
+        switch(animation_speed_info)
+        {
+        case animation_speed_type::IS_SLOWER:
+            {
+                --amount_of_tick_to_skip;
+                position=object_positions[m_current_position];
+                if(amount_of_tick_to_skip<=0)
+                {
+                    ++m_current_position;
+                    amount_of_tick_to_skip=frame_tick_count;
+                }
+            }
+            break;
+        case animation_speed_type::IS_FASTER:
+            {
+                if((m_current_position+frame_tick_count)>=object_positions.size())
+                {
+                    m_current_position=object_positions.size();
+                    return m_end_position;
+                }
+                else
+                {
+                    position=object_positions[m_current_position];
+                    m_current_position+=frame_tick_count;
+                }
+            }
+            break;
+        default:
+            position=object_positions[m_current_position];
+            ++m_current_position;
+        };
+        return position;
     }
 
     anim_obj_status animated_object::prepare_to_render()
@@ -168,7 +213,7 @@ namespace animation_engine
             m_status=anim_obj_status::NOT_READY;
         }
         int num=functions->calculate_interpolation(object_positions,m_begin_position,
-                                                    m_end_position,m_anim_speed);
+                                                    m_end_position);
         if(num==0)
         {
             m_status=anim_obj_status::NOT_READY;
