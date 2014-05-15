@@ -296,7 +296,6 @@ int main()
                     {
                         object->set_end_position(sf::Vector2f(event.mouseButton.x,event.mouseButton.y));
                         object->prepare_to_render();
-                        object->set_animation_speed(90);
                         engine.register_object(object);
                         //Create a new one
                         sf::Sprite sprite(texture);

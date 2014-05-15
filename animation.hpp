@@ -27,7 +27,6 @@ namespace animation_engine
     public:
         virtual void frame_tick(sf::RenderWindow& p_rnd)=0;
         virtual anim_obj_status prepare_to_render()=0;
-        virtual int set_animation_speed(int p_speed)=0;
 
         virtual sf::Vector2f get_position()=0;
         virtual sf::Vector2f set_begin_position(const sf::Vector2f& position)=0;
@@ -85,22 +84,12 @@ namespace animation_engine
         int m_current_position{0};
         sf::Vector2f get_current_position();
 
-        int m_anim_speed{100};
-        int frame_tick_count{-1};
-        int amount_of_tick_to_skip{0};
-        enum animation_speed_type
-        {
-            IS_NORMAL=0,
-            IS_SLOWER,
-            IS_FASTER
-        }animation_speed_info;
         std::shared_ptr<I_interpolation_algorithm> functions;
     public:
         animated_object(sprite_ptr_t p_sprite,
                         std::shared_ptr<I_interpolation_algorithm> interpolation=std::shared_ptr<linear_interpolation>(new linear_interpolation));
 
         void frame_tick(sf::RenderWindow& p_rnd); //A new frame may be rendered
-        int set_animation_speed(int p_speed);
 
         sf::Vector2f get_position();
         sf::Vector2f set_begin_position(const sf::Vector2f& position);

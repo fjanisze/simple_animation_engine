@@ -102,35 +102,9 @@ namespace animation_engine
         m_begin_position=m_sprite->getPosition();
     }
 
-    int animated_object::set_animation_speed(int p_speed)
-    {
-        if((p_speed>=1)&&(p_speed<=199))
-        {
-            m_anim_speed=p_speed;
-            if(p_speed==100)
-            {
-                animation_speed_info=animation_speed_type::IS_NORMAL;
-            }
-            else
-            {
-                if(p_speed<100)
-                {
-                    animation_speed_info=animation_speed_type::IS_SLOWER;
-                    frame_tick_count=100-p_speed;
-                }
-                else
-                {
-                    animation_speed_info=animation_speed_type::IS_FASTER;
-                    frame_tick_count=p_speed-100;
-                }
-            }
-        }
-        return m_anim_speed;
-    }
-
     sf::Vector2f animated_object::get_position()
     {
-        return object_positions.at(m_current_position);
+        return m_sprite->getPosition();
     }
 
     sprite_ptr_t animated_object::get_sprite()
@@ -170,37 +144,8 @@ namespace animation_engine
         }
         //Look for the new position
         sf::Vector2f position;
-        switch(animation_speed_info)
-        {
-        case animation_speed_type::IS_SLOWER:
-            {
-                --amount_of_tick_to_skip;
-                position=object_positions[m_current_position];
-                if(amount_of_tick_to_skip<=0)
-                {
-                    ++m_current_position;
-                    amount_of_tick_to_skip=frame_tick_count;
-                }
-            }
-            break;
-        case animation_speed_type::IS_FASTER:
-            {
-                if((m_current_position+frame_tick_count)>=object_positions.size())
-                {
-                    m_current_position=object_positions.size();
-                    return m_end_position;
-                }
-                else
-                {
-                    position=object_positions[m_current_position];
-                    m_current_position+=frame_tick_count;
-                }
-            }
-            break;
-        default:
-            position=object_positions[m_current_position];
-            ++m_current_position;
-        };
+        position=object_positions[m_current_position];
+        ++m_current_position;
         return position;
     }
 
