@@ -207,6 +207,9 @@ namespace helper_objects
         MOCK_METHOD1(set_begin_position,sf::Vector2f(const sf::Vector2f&));
         MOCK_METHOD1(set_end_position,sf::Vector2f(const sf::Vector2f&));
 
+        MOCK_METHOD2(set_animation_speed,void(float,int));
+        MOCK_METHOD1(get_animation_execution_time,float(int));
+
         MOCK_METHOD0(get_sprite,sprite_ptr_t());
     };
 }
@@ -296,6 +299,8 @@ int main()
                     {
                         object->set_end_position(sf::Vector2f(event.mouseButton.x,event.mouseButton.y));
                         object->prepare_to_render();
+                        std::cout<<"Animation time: "<<object->get_animation_execution_time(60)<<std::endl;
+                        object->set_animation_speed(1,60);
                         engine.register_object(object);
                         //Create a new one
                         sf::Sprite sprite(texture);

@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <list>
 #include <memory>
+#include <chrono>
 
 namespace animation_engine
 {
@@ -31,6 +32,9 @@ namespace animation_engine
         virtual sf::Vector2f get_position()=0;
         virtual sf::Vector2f set_begin_position(const sf::Vector2f& position)=0;
         virtual sf::Vector2f set_end_position(const sf::Vector2f& new_position)=0;
+
+        virtual void set_animation_speed(float p_anim_duration,int p_frame_rate)=0;
+        virtual float get_animation_execution_time(int p_frame_rate)=0;
 
         virtual sprite_ptr_t get_sprite()=0;
     };
@@ -72,7 +76,6 @@ namespace animation_engine
                                     const sf::Vector2f& p_end);
     };
 
-
     class animated_object : public I_animate_object
     {
         anim_obj_status m_status;
@@ -85,6 +88,17 @@ namespace animation_engine
         sf::Vector2f get_current_position();
 
         std::shared_ptr<I_interpolation_algorithm> functions;
+
+        enum animation_speed_type
+        {
+            IS_NORMAL=0,
+            IS_SLOWER,
+            IS_FASTER
+        }animation_speed_info;
+        double single_frame_time_count{0};
+        double single_time_increment{0};
+        double current_time{0};
+        double expected_time_to_draw{0};
     public:
         animated_object(sprite_ptr_t p_sprite,
                         std::shared_ptr<I_interpolation_algorithm> interpolation=std::shared_ptr<linear_interpolation>(new linear_interpolation));
@@ -95,6 +109,8 @@ namespace animation_engine
         sf::Vector2f set_begin_position(const sf::Vector2f& position);
         sf::Vector2f set_end_position(const sf::Vector2f& new_position);
         anim_obj_status prepare_to_render();
+        void set_animation_speed(float p_anim_duration,int p_frame_rate);
+        float get_animation_execution_time(int p_frame_rate);
 
         sprite_ptr_t get_sprite();
         static anim_obj_ptr create(const sf::Sprite& p_sprite) throw(std::bad_alloc);

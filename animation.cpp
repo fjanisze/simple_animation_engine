@@ -100,6 +100,8 @@ namespace animation_engine
         functions=interpolation;
         m_sprite=p_sprite;
         m_begin_position=m_sprite->getPosition();
+        animation_speed_info=animation_speed_type::IS_NORMAL;
+
     }
 
     sf::Vector2f animated_object::get_position()
@@ -131,9 +133,60 @@ namespace animation_engine
     void animated_object::frame_tick(sf::RenderWindow& p_rnd)
     {
         if(m_status==anim_obj_status::NOT_READY) return;
-        m_sprite->setPosition(get_current_position());
+        if(animation_speed_info==animation_speed_type::IS_SLOWER)
+        {
+            if(current_time>=expected_time_to_draw)//Reset the counter and do not change the position (skip the frame)
+            {
+                expected_time_to_draw+=single_time_increment;
+                m_sprite->setPosition(get_current_position());
+            }
+            current_time+=single_frame_time_count;
+        }
+        else if(animation_speed_info==animation_speed_type::IS_FASTER)
+        {
+            while(current_time<expected_time_to_draw)
+            {
+                current_time+=single_time_increment;
+                ++m_current_position;
+            }
+            expected_time_to_draw+=single_frame_time_count;
+            --m_current_position;
+            m_sprite->setPosition(get_current_position());
+        }
+        else //IS_NORMAL
+        {
+            m_sprite->setPosition(get_current_position());
+        }
         //Draw the sprite
         p_rnd.draw(*m_sprite);
+    }
+
+    void animated_object::set_animation_speed(float p_anim_duration,int p_frame_rate)
+    {
+        int amount_of_points=object_positions.size();
+        if(amount_of_points>0)
+        {
+            //Time required to draw the current amount of points
+            float time_needed_in_sec=get_animation_execution_time(p_frame_rate);
+            if(p_anim_duration>time_needed_in_sec)
+            {
+                animation_speed_info=animation_speed_type::IS_SLOWER;
+                single_time_increment=1/(amount_of_points/p_anim_duration);
+            }
+            else if(p_anim_duration<time_needed_in_sec)
+            {
+                animation_speed_info=animation_speed_type::IS_FASTER;
+                single_time_increment=p_anim_duration/amount_of_points;
+            }
+            else
+            {
+                animation_speed_info=animation_speed_type::IS_NORMAL;
+                single_time_increment=time_needed_in_sec/amount_of_points;
+            }
+            expected_time_to_draw=single_time_increment;
+            single_frame_time_count=1.0/p_frame_rate;
+        }
+
     }
 
     sf::Vector2f animated_object::get_current_position()
@@ -164,8 +217,17 @@ namespace animation_engine
             m_status=anim_obj_status::NOT_READY;
         }
         m_current_position=0;
+        //Set begin position
+        m_sprite->setPosition(m_begin_position);
         return m_status;
     }
+
+    float animated_object::get_animation_execution_time(int p_frame_rate)
+    {
+        return (float)object_positions.size()/p_frame_rate;
+    }
+
+
 
     ///////////////////////////////////////////////////////////////////
     //
