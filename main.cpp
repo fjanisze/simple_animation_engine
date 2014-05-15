@@ -3,7 +3,7 @@
 #include <chrono>
 #include <sstream>
 
-//#define RUN_REGRESSION
+#define RUN_REGRESSION
 
 class linear_interpolation_test_small : public ::testing::Test
 {
@@ -184,7 +184,6 @@ TEST_F(animated_object_basic,build_and_set_proper_values)
     {
         FAIL();
     }
-    ASSERT_THROW(animated_object->get_position(),std::out_of_range);//The container is empty
     sf::Vector2f end_position(53,-111);
     sf::Vector2f begin_position(-99,-45);
     ASSERT_EQ(anim_obj_status::NOT_READY,animated_object->prepare_to_render());//Texture missing
@@ -199,7 +198,7 @@ namespace helper_objects
 {
     struct animated_object_mock : public I_animate_object
     {
-        MOCK_METHOD1(frame_tick,void(sf::RenderWindow&));
+        MOCK_METHOD1(frame_tick,animation_engine::anim_obj_status(sf::RenderWindow&));
         MOCK_METHOD0(prepare_to_render,anim_obj_status());
         MOCK_METHOD1(set_animation_speed,int(int));
 
@@ -215,6 +214,7 @@ namespace helper_objects
 }
 
 using ::testing::_;
+using ::testing::DefaultValue;
 
 struct animation_engine_testsuit : public ::testing::Test
 {
@@ -227,6 +227,8 @@ struct animation_engine_testsuit : public ::testing::Test
     {
         anim_obj1=std::shared_ptr<helper_objects::animated_object_mock>(new helper_objects::animated_object_mock);
         anim_obj2=std::shared_ptr<helper_objects::animated_object_mock>(new helper_objects::animated_object_mock);
+        //Default return value for frame_tick
+        DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::READY);
     }
 };
 

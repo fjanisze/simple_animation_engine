@@ -130,9 +130,12 @@ namespace animation_engine
         return last_end_position;
     }
 
-    void animated_object::frame_tick(sf::RenderWindow& p_rnd)
+    anim_obj_status animated_object::frame_tick(sf::RenderWindow& p_rnd)
     {
-        if(m_status==anim_obj_status::NOT_READY) return;
+        if(m_status!=anim_obj_status::READY)
+        {
+            return m_status;
+        }
         if(animation_speed_info==animation_speed_type::IS_SLOWER)
         {
             if(current_time>=expected_time_to_draw)//Reset the counter and do not change the position (skip the frame)
@@ -159,6 +162,7 @@ namespace animation_engine
         }
         //Draw the sprite
         p_rnd.draw(*m_sprite);
+        return m_status;
     }
 
     void animated_object::set_animation_speed(float p_anim_duration,int p_frame_rate)
@@ -190,9 +194,13 @@ namespace animation_engine
     }
 
     sf::Vector2f animated_object::get_current_position()
-    {
+    try{
         if(m_current_position>=object_positions.size())
         {
+            if(m_status==anim_obj_status::READY)
+            {
+                m_status=anim_obj_status::COMPLETED;
+            }
             return m_end_position;
         }
         //Look for the new position
@@ -200,6 +208,11 @@ namespace animation_engine
         position=object_positions[m_current_position];
         ++m_current_position;
         return position;
+    }catch(...)
+    {
+        m_current_position=0;
+        m_status=anim_obj_status::FAULTY;
+        throw;
     }
 
     anim_obj_status animated_object::prepare_to_render()
@@ -242,9 +255,9 @@ namespace animation_engine
     {
     }
 
-    int animation_engine::register_object(anim_obj_ptr obj)
+    int animation_engine::register_object(anim_obj_ptr p_obj,animated_obj_completion_opt p_action_when_completed)
     {
-        object_container.push_back(obj);
+        object_container.push_back(p_obj);
         return object_container.size();
     }
 
@@ -256,4 +269,38 @@ namespace animation_engine
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
