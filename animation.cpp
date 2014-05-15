@@ -130,9 +130,18 @@ namespace animation_engine
         return last_end_position;
     }
 
+    void animated_object::repeat()
+    {
+        if(m_status==anim_obj_status::STATUS_COMPLETED)
+        {
+            m_current_position=0;
+            m_status=anim_obj_status::STATUS_READY;
+        }
+    }
+
     anim_obj_status animated_object::frame_tick(sf::RenderWindow& p_rnd)
     {
-        if(m_status!=anim_obj_status::READY)
+        if(m_status!=anim_obj_status::STATUS_READY)
         {
             return m_status;
         }
@@ -197,9 +206,9 @@ namespace animation_engine
     try{
         if(m_current_position>=object_positions.size())
         {
-            if(m_status==anim_obj_status::READY)
+            if(m_status==anim_obj_status::STATUS_READY)
             {
-                m_status=anim_obj_status::COMPLETED;
+                m_status=anim_obj_status::STATUS_COMPLETED;
             }
             return m_end_position;
         }
@@ -211,23 +220,23 @@ namespace animation_engine
     }catch(...)
     {
         m_current_position=0;
-        m_status=anim_obj_status::FAULTY;
+        m_status=anim_obj_status::STATUS_FAULTY;
         throw;
     }
 
     anim_obj_status animated_object::prepare_to_render()
     {
-        m_status=anim_obj_status::READY;
+        m_status=anim_obj_status::STATUS_READY;
         //Check if the sprite has a valid texture
         if(m_sprite->getTexture()==nullptr)
         {
-            m_status=anim_obj_status::NOT_READY;
+            m_status=anim_obj_status::STATUS_NOT_READY;
         }
         int num=functions->calculate_interpolation(object_positions,m_begin_position,
                                                     m_end_position);
         if(num==0)
         {
-            m_status=anim_obj_status::NOT_READY;
+            m_status=anim_obj_status::STATUS_NOT_READY;
         }
         m_current_position=0;
         //Set begin position
@@ -257,15 +266,38 @@ namespace animation_engine
 
     int animation_engine::register_object(anim_obj_ptr p_obj,animated_obj_completion_opt p_action_when_completed)
     {
-        object_container.push_back(p_obj);
-        return object_container.size();
+        anim_obj_container_entry new_entry;
+        new_entry.m_anim_object=p_obj;
+        new_entry.m_action_when_completed=p_action_when_completed;
+        m_object_container.push_back(new_entry);
+        return m_object_container.size();
     }
 
     void animation_engine::draw()
     {
-        for(auto elem:object_container)
+        anim_obj_status obj_status;
+        for(auto& elem:m_object_container)
         {
-            elem->frame_tick(m_rnd_wnd);
+            obj_status=elem.m_anim_object->frame_tick(m_rnd_wnd);
+            if(obj_status==anim_obj_status::STATUS_COMPLETED)
+            {
+                perf_action_on_completed_animation(elem);
+            }
+        }
+    }
+
+    void animation_engine::perf_action_on_completed_animation(anim_obj_container_entry& p_obj)
+    {
+        switch(p_obj.m_action_when_completed)
+        {
+        case animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT:
+            p_obj.m_to_be_removed=true;
+            break;
+        case animated_obj_completion_opt::ACTION_REPEAT_ANIMATION:
+            {
+                p_obj.m_anim_object->repeat();
+            }
+            break;
         }
     }
 }

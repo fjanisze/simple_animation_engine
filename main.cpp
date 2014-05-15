@@ -3,7 +3,7 @@
 #include <chrono>
 #include <sstream>
 
-#define RUN_REGRESSION
+//#define RUN_REGRESSION
 
 class linear_interpolation_test_small : public ::testing::Test
 {
@@ -186,12 +186,13 @@ TEST_F(animated_object_basic,build_and_set_proper_values)
     }
     sf::Vector2f end_position(53,-111);
     sf::Vector2f begin_position(-99,-45);
-    ASSERT_EQ(anim_obj_status::NOT_READY,animated_object->prepare_to_render());//Texture missing
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,animated_object->prepare_to_render());//Texture missing
     ASSERT_EQ(sf::Vector2f(0,0),animated_object->set_end_position(end_position));
     ASSERT_EQ(sf::Vector2f(0,0),animated_object->set_begin_position(begin_position));
-    ASSERT_EQ(anim_obj_status::NOT_READY,animated_object->prepare_to_render());//Texture missing
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,animated_object->prepare_to_render());//Texture missing
     animated_object->get_sprite()->setTexture(test_texture);
-    ASSERT_EQ(anim_obj_status::READY,animated_object->prepare_to_render());
+    ASSERT_EQ(anim_obj_status::STATUS_READY,animated_object->prepare_to_render());
+    ASSERT_EQ(animated_object->get_position(),begin_position);
 }
 
 namespace helper_objects
@@ -205,6 +206,7 @@ namespace helper_objects
         MOCK_METHOD0(get_position,sf::Vector2f());
         MOCK_METHOD1(set_begin_position,sf::Vector2f(const sf::Vector2f&));
         MOCK_METHOD1(set_end_position,sf::Vector2f(const sf::Vector2f&));
+        MOCK_METHOD0(repeat,void());
 
         MOCK_METHOD2(set_animation_speed,void(float,int));
         MOCK_METHOD1(get_animation_execution_time,float(int));
@@ -228,7 +230,7 @@ struct animation_engine_testsuit : public ::testing::Test
         anim_obj1=std::shared_ptr<helper_objects::animated_object_mock>(new helper_objects::animated_object_mock);
         anim_obj2=std::shared_ptr<helper_objects::animated_object_mock>(new helper_objects::animated_object_mock);
         //Default return value for frame_tick
-        DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::READY);
+        DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_READY);
     }
 };
 
@@ -302,8 +304,8 @@ int main()
                         object->set_end_position(sf::Vector2f(event.mouseButton.x,event.mouseButton.y));
                         object->prepare_to_render();
                         std::cout<<"Animation time: "<<object->get_animation_execution_time(60)<<std::endl;
-                        object->set_animation_speed(1,60);
-                        engine.register_object(object);
+                        object->set_animation_speed(2,60);
+                        engine.register_object(object,animation_engine::animated_obj_completion_opt::ACTION_REPEAT_ANIMATION);
                         //Create a new one
                         sf::Sprite sprite(texture);
                         object=animation_engine::animated_object::create(sprite);

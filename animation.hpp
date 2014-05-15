@@ -13,10 +13,10 @@ namespace animation_engine
     //Possible state for the animated_object class
     enum anim_obj_status
     {
-        READY,     //Ready to be drawn
-        NOT_READY, //Not ready...
-        FAULTY,    //Something bad happened
-        COMPLETED, //The animation is finished
+        STATUS_READY,     //Ready to be drawn
+        STATUS_NOT_READY, //Not ready...
+        STATUS_FAULTY,    //Something bad happened
+        STATUS_COMPLETED, //The animation is finished
     };
 
     /*
@@ -34,6 +34,7 @@ namespace animation_engine
         virtual sf::Vector2f get_position()=0;
         virtual sf::Vector2f set_begin_position(const sf::Vector2f& position)=0;
         virtual sf::Vector2f set_end_position(const sf::Vector2f& new_position)=0;
+        virtual void repeat()=0;
 
         virtual void set_animation_speed(float p_anim_duration,int p_frame_rate)=0;
         virtual float get_animation_execution_time(int p_frame_rate)=0;
@@ -111,6 +112,7 @@ namespace animation_engine
         sf::Vector2f get_position();
         sf::Vector2f set_begin_position(const sf::Vector2f& position);
         sf::Vector2f set_end_position(const sf::Vector2f& new_position);
+        void repeat();
 
         anim_obj_status prepare_to_render();
         void set_animation_speed(float p_anim_duration,int p_frame_rate);
@@ -132,11 +134,18 @@ namespace animation_engine
      * Container for one or more animated_objects,
      * each of which will be displayed on the screen
      */
+    struct anim_obj_container_entry
+    {
+        anim_obj_ptr m_anim_object;
+        animated_obj_completion_opt m_action_when_completed;
+        bool m_to_be_removed{false};
+    };
     class animation_engine
     {
-        std::list<anim_obj_ptr> object_container;
+        std::list<anim_obj_container_entry> m_object_container;
         int m_frame_rate{0};
         sf::RenderWindow& m_rnd_wnd;
+        void perf_action_on_completed_animation(anim_obj_container_entry& p_obj);
     public:
         animation_engine(sf::RenderWindow& p_rnd_wnd, int p_frame_rate);
         int register_object(anim_obj_ptr p_obj,
