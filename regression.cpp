@@ -245,6 +245,7 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_draw)
     EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
 
     ASSERT_EQ(draw_return_status::STATUS_OK,engine.draw());
+    ASSERT_FALSE(engine.check_if_all_completed());
 }
 
 TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_repeat_action)
@@ -264,6 +265,7 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_repeat_action)
     EXPECT_CALL(*anim_obj2,repeat()).Times(2);
 
     ASSERT_EQ(draw_return_status::STATUS_OK,engine.draw());
+    ASSERT_FALSE(engine.check_if_all_completed());
 }
 
 TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_delete_action)
@@ -281,6 +283,7 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_delete_action)
     EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
 
     ASSERT_EQ(draw_return_status::STATUS_CLEANUP_NEEDED,engine.draw());
+    ASSERT_TRUE(engine.check_if_all_completed());
     ASSERT_EQ(0,engine.clean_up()); //Nothing should be left in the container
 }
 

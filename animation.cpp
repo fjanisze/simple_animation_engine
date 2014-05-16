@@ -276,11 +276,13 @@ namespace animation_engine
     draw_return_status animation_engine::draw()
     {
         draw_return_status status=draw_return_status::STATUS_OK;
+        amount_of_obj_in_complete_state=0;
         anim_obj_status obj_status;
         for(auto& elem:m_object_container)
         {
             if(elem.m_to_be_removed)
             {
+                ++amount_of_obj_in_complete_state;
                 status=draw_return_status::STATUS_CLEANUP_NEEDED;
                 continue; //Skip the objects which should be removed
             }
@@ -288,6 +290,11 @@ namespace animation_engine
             if(obj_status==anim_obj_status::STATUS_COMPLETED)
             {
                 status=perf_action_on_completed_animation(elem);
+                if(elem.m_action_when_completed!=animated_obj_completion_opt::ACTION_REPEAT_ANIMATION)
+                {   //A repeating animation cannot be in the complete state, after the repeat() call
+                    //is back in the 'ready' state
+                    ++amount_of_obj_in_complete_state;
+                }
             }
         }
         return status;
@@ -312,6 +319,7 @@ namespace animation_engine
     {
         switch(p_obj.m_action_when_completed)
         {
+        case animated_obj_completion_opt::ACTION_DEFAULT: //Default action: remove the object
         case animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT:
             p_obj.m_to_be_removed=true;
             return draw_return_status::STATUS_CLEANUP_NEEDED;
@@ -323,6 +331,12 @@ namespace animation_engine
             break;
         }
         return draw_return_status::STATUS_OK;
+    }
+
+    //Return true if all the animated_object are in the STATUS_COMPLETE state
+    bool animation_engine::check_if_all_completed()
+    {
+        return amount_of_obj_in_complete_state==m_object_container.size();
     }
 }
 

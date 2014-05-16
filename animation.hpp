@@ -154,12 +154,14 @@ namespace animation_engine
         int m_frame_rate{0};
         sf::RenderWindow& m_rnd_wnd;
         draw_return_status perf_action_on_completed_animation(anim_obj_container_entry& p_obj);
+        int amount_of_obj_in_complete_state{0};
     public:
         animation_engine(sf::RenderWindow& p_rnd_wnd, int p_frame_rate);
         int register_object(anim_obj_ptr p_obj,
                             animated_obj_completion_opt p_action_when_completed=animated_obj_completion_opt::ACTION_DEFAULT);
         draw_return_status draw();
         int clean_up();
+        bool check_if_all_completed();
     };
 }
 
