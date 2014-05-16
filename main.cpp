@@ -270,6 +270,23 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_repeat_action)
     ASSERT_EQ(draw_return_status::STATUS_OK,engine.draw());
 }
 
+TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_delete_action)
+{
+    animation_engine::animation_engine engine(render_window,40);
+
+    //frame_tick need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
+    DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
+
+    ASSERT_EQ(1,engine.register_object(anim_obj1,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
+    ASSERT_EQ(2,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
+    ASSERT_EQ(3,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
+
+    EXPECT_CALL(*anim_obj1,frame_tick(_)).Times(1);
+    EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
+
+    ASSERT_EQ(draw_return_status::STATUS_CLEANUP_NEEDED,engine.draw());
+}
+
 #ifdef RUN_REGRESSION
 
 int main(int argc,char** argv)
