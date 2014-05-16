@@ -273,25 +273,33 @@ namespace animation_engine
         return m_object_container.size();
     }
 
-    void animation_engine::draw()
+    draw_return_status animation_engine::draw()
     {
+        draw_return_status status=draw_return_status::STATUS_OK;
         anim_obj_status obj_status;
         for(auto& elem:m_object_container)
         {
+            if(elem.m_to_be_removed)
+            {
+                status=draw_return_status::STATUS_CLEANUP_NEEDED;
+                continue; //Skip the objects which should be removed
+            }
             obj_status=elem.m_anim_object->frame_tick(m_rnd_wnd);
             if(obj_status==anim_obj_status::STATUS_COMPLETED)
             {
-                perf_action_on_completed_animation(elem);
+                status=perf_action_on_completed_animation(elem);
             }
         }
+        return status;
     }
 
-    void animation_engine::perf_action_on_completed_animation(anim_obj_container_entry& p_obj)
+    draw_return_status animation_engine::perf_action_on_completed_animation(anim_obj_container_entry& p_obj)
     {
         switch(p_obj.m_action_when_completed)
         {
         case animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT:
             p_obj.m_to_be_removed=true;
+            return draw_return_status::STATUS_CLEANUP_NEEDED;
             break;
         case animated_obj_completion_opt::ACTION_REPEAT_ANIMATION:
             {
@@ -299,6 +307,7 @@ namespace animation_engine
             }
             break;
         }
+        return draw_return_status::STATUS_OK;
     }
 }
 

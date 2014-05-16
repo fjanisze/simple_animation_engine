@@ -130,6 +130,13 @@ namespace animation_engine
         ACTION_REMOVE_ANIMATED_OBJECT, //Remove the object from the animation_engine container
     };
 
+    //Return status from the draw function
+    enum draw_return_status
+    {
+        STATUS_OK,
+        STATUS_CLEANUP_NEEDED,
+    };
+
     /*
      * Container for one or more animated_objects,
      * each of which will be displayed on the screen
@@ -140,17 +147,18 @@ namespace animation_engine
         animated_obj_completion_opt m_action_when_completed;
         bool m_to_be_removed{false};
     };
+
     class animation_engine
     {
         std::list<anim_obj_container_entry> m_object_container;
         int m_frame_rate{0};
         sf::RenderWindow& m_rnd_wnd;
-        void perf_action_on_completed_animation(anim_obj_container_entry& p_obj);
+        draw_return_status perf_action_on_completed_animation(anim_obj_container_entry& p_obj);
     public:
         animation_engine(sf::RenderWindow& p_rnd_wnd, int p_frame_rate);
         int register_object(anim_obj_ptr p_obj,
                             animated_obj_completion_opt p_action_when_completed=animated_obj_completion_opt::ACTION_DEFAULT);
-        void draw();
+        draw_return_status draw();
     };
 }
 

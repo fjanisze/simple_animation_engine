@@ -3,7 +3,7 @@
 #include <chrono>
 #include <sstream>
 
-//#define RUN_REGRESSION
+#define RUN_REGRESSION
 
 class linear_interpolation_test_small : public ::testing::Test
 {
@@ -199,6 +199,8 @@ namespace helper_objects
 {
     struct animated_object_mock : public I_animate_object
     {
+        anim_obj_status m_status;
+
         MOCK_METHOD1(frame_tick,animation_engine::anim_obj_status(sf::RenderWindow&));
         MOCK_METHOD0(prepare_to_render,anim_obj_status());
         MOCK_METHOD1(set_animation_speed,int(int));
@@ -220,17 +222,19 @@ using ::testing::DefaultValue;
 
 struct animation_engine_testsuit : public ::testing::Test
 {
-    typedef std::shared_ptr<helper_objects::animated_object_mock> anim_obj_mock_ptr;
+    typedef ::testing::StrictMock<helper_objects::animated_object_mock> anim_obj_strict_mock;
+    typedef std::shared_ptr<anim_obj_strict_mock> anim_obj_mock_ptr;
 
     sf::RenderWindow render_window;
     anim_obj_mock_ptr anim_obj1,
-                      anim_obj2;
+                     anim_obj2;
     animation_engine_testsuit()
     {
-        anim_obj1=std::shared_ptr<helper_objects::animated_object_mock>(new helper_objects::animated_object_mock);
-        anim_obj2=std::shared_ptr<helper_objects::animated_object_mock>(new helper_objects::animated_object_mock);
+        anim_obj1=std::shared_ptr<anim_obj_strict_mock>(new anim_obj_strict_mock);
+        anim_obj2=std::shared_ptr<anim_obj_strict_mock>(new anim_obj_strict_mock);
         //Default return value for frame_tick
         DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_READY);
+        DefaultValue<sf::Vector2f>::Set(sf::Vector2f(0,0));
     }
 };
 
@@ -244,7 +248,26 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_draw)
     EXPECT_CALL(*anim_obj1,frame_tick(_)).Times(1);
     EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
 
-    engine.draw();
+    ASSERT_EQ(draw_return_status::STATUS_OK,engine.draw());
+}
+
+TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_repeat_action)
+{
+    animation_engine::animation_engine engine(render_window,40);
+
+    //frame_tick need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
+    DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
+
+    ASSERT_EQ(1,engine.register_object(anim_obj1,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
+    ASSERT_EQ(2,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
+    ASSERT_EQ(3,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
+
+    EXPECT_CALL(*anim_obj1,frame_tick(_)).Times(1);
+    EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
+    EXPECT_CALL(*anim_obj1,repeat()).Times(1);
+    EXPECT_CALL(*anim_obj2,repeat()).Times(2);
+
+    ASSERT_EQ(draw_return_status::STATUS_OK,engine.draw());
 }
 
 #ifdef RUN_REGRESSION
@@ -304,7 +327,7 @@ int main()
                         object->set_end_position(sf::Vector2f(event.mouseButton.x,event.mouseButton.y));
                         object->prepare_to_render();
                         std::cout<<"Animation time: "<<object->get_animation_execution_time(60)<<std::endl;
-                        object->set_animation_speed(2,60);
+                        object->set_animation_speed(.5,60);
                         engine.register_object(object,animation_engine::animated_obj_completion_opt::ACTION_REPEAT_ANIMATION);
                         //Create a new one
                         sf::Sprite sprite(texture);
