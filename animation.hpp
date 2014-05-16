@@ -159,6 +159,7 @@ namespace animation_engine
         int register_object(anim_obj_ptr p_obj,
                             animated_obj_completion_opt p_action_when_completed=animated_obj_completion_opt::ACTION_DEFAULT);
         draw_return_status draw();
+        int clean_up();
     };
 }
 

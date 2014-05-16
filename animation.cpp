@@ -293,6 +293,21 @@ namespace animation_engine
         return status;
     }
 
+    //The cleanup action is needed to remove from the container the object marked as m_to_be_removed{true}
+    int animation_engine::clean_up()
+    {
+        std::list<anim_obj_container_entry>::iterator it=m_object_container.begin();
+        while(it!=m_object_container.end())
+        {
+            if(it->m_to_be_removed)
+            {
+                m_object_container.erase(it++);
+            }
+            else ++it;
+        }
+        return m_object_container.size();
+    }
+
     draw_return_status animation_engine::perf_action_on_completed_animation(anim_obj_container_entry& p_obj)
     {
         switch(p_obj.m_action_when_completed)
