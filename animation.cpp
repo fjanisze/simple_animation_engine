@@ -349,8 +349,13 @@ namespace animation_engine
     }
 
     //The cleanup action is needed to remove from the container the object marked as m_to_be_removed{true}
-    int animation_engine::clean_up()
+    int animation_engine::clean_up(bool p_force_clean_all)
     {
+        if(p_force_clean_all)
+        {
+            m_object_container.clear();
+            return 0;
+        }
         std::list<anim_obj_container_entry>::iterator it=m_object_container.begin();
         while(it!=m_object_container.end())
         {
