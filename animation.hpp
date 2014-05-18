@@ -9,6 +9,8 @@
 namespace animation_engine
 {
     using sprite_ptr_t=std::shared_ptr<sf::Sprite>;
+    using const_sprite_ptr_t=std::shared_ptr<const sf::Sprite>;
+    using texture_ptr_t=std::shared_ptr<sf::Texture>;
 
     //Possible state for the animated_object class
     enum anim_obj_status
@@ -39,7 +41,9 @@ namespace animation_engine
         virtual void set_animation_speed(float p_anim_duration,int p_frame_rate)=0;
         virtual float get_animation_execution_time(int p_frame_rate)=0;
 
-        virtual sprite_ptr_t get_sprite()=0;
+        virtual const_sprite_ptr_t get_sprite()=0;
+        virtual texture_ptr_t get_texture()=0;
+        virtual ~I_animate_object()=0;
     };
 
     class animated_object;
@@ -82,6 +86,8 @@ namespace animation_engine
     class animated_object : public I_animate_object
     {
         anim_obj_status m_status;
+        texture_ptr_t m_texture;
+
         sprite_ptr_t m_sprite;
         sf::Vector2f m_begin_position;
         sf::Vector2f m_end_position;//This is where this sprite is moving
@@ -103,10 +109,10 @@ namespace animation_engine
         double current_time{0};
         double expected_time_to_draw{0};
 
-    public:
         animated_object(sprite_ptr_t p_sprite,
                         std::shared_ptr<I_interpolation_algorithm> interpolation=std::shared_ptr<linear_interpolation>(new linear_interpolation));
 
+    public:
         anim_obj_status frame_tick(sf::RenderWindow& p_rnd); //A new frame may be rendered
 
         sf::Vector2f get_position();
@@ -118,8 +124,10 @@ namespace animation_engine
         void set_animation_speed(float p_anim_duration,int p_frame_rate);
         float get_animation_execution_time(int p_frame_rate);
 
-        sprite_ptr_t get_sprite();
-        static anim_obj_ptr create(const sf::Sprite& p_sprite) throw(std::bad_alloc);
+        const_sprite_ptr_t get_sprite();
+        texture_ptr_t get_texture();
+        static anim_obj_ptr create(const sf::Sprite& p_sprite);
+        ~animated_object(){}
     };
 
     //Options that can be provided with the animated_object in order to specify its behavior

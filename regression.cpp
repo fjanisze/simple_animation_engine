@@ -165,13 +165,14 @@ public:
     sf::Texture test_texture;
     animated_object_basic()
     {
+        test_sprite.setTexture(test_texture);
     }
 };
 
 using namespace animation_engine;
 
 
-TEST_F(animated_object_basic,build_and_set_proper_values)
+TEST_F(animated_object_basic,build_with_texture_size_0)
 {
     anim_obj_ptr animated_object;
     try{
@@ -182,13 +183,24 @@ TEST_F(animated_object_basic,build_and_set_proper_values)
     }
     sf::Vector2f end_position(53,-111);
     sf::Vector2f begin_position(-99,-45);
-    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,animated_object->prepare_to_render());//Texture missing
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,animated_object->prepare_to_render());//Texture size 0 and no interpolation points
     ASSERT_EQ(sf::Vector2f(0,0),animated_object->set_end_position(end_position));
     ASSERT_EQ(sf::Vector2f(0,0),animated_object->set_begin_position(begin_position));
-    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,animated_object->prepare_to_render());//Texture missing
-    animated_object->get_sprite()->setTexture(test_texture);
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,animated_object->prepare_to_render());//Texture size 0
+}
+
+TEST_F(animated_object_basic,build_and_set_proper_values)
+{
+    anim_obj_ptr animated_object;
+    test_texture.create(10,10);
+    test_sprite.setTexture(test_texture);
+    try{
+        animated_object=animated_object::create(test_sprite);
+    }catch(...)
+    {
+        FAIL();
+    }
     ASSERT_EQ(anim_obj_status::STATUS_READY,animated_object->prepare_to_render());
-    ASSERT_EQ(animated_object->get_position(),begin_position);
 }
 
 namespace helper_objects
@@ -209,7 +221,8 @@ namespace helper_objects
         MOCK_METHOD2(set_animation_speed,void(float,int));
         MOCK_METHOD1(get_animation_execution_time,float(int));
 
-        MOCK_METHOD0(get_sprite,sprite_ptr_t());
+        MOCK_METHOD0(get_sprite,const_sprite_ptr_t());
+        MOCK_METHOD0(get_texture,texture_ptr_t());
     };
 }
 

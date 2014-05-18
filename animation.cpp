@@ -86,19 +86,24 @@ namespace animation_engine
     //
     ///////////////////////////////////////////////////////////////////
 
+    I_animate_object::~I_animate_object(){}
+
     //Create an empty sprite pointer
-    anim_obj_ptr animated_object::create(const sf::Sprite& p_sprite) throw(std::bad_alloc)
+    anim_obj_ptr animated_object::create(const sf::Sprite& p_sprite)
     {
         sprite_ptr_t sprite_ptr=std::make_shared<sf::Sprite>(p_sprite);
         anim_obj_ptr new_object(new animated_object(sprite_ptr));
         return new_object;
     }
 
+
     animated_object::animated_object(sprite_ptr_t p_sprite,
                                      std::shared_ptr<I_interpolation_algorithm> interpolation)
     {
         functions=interpolation;
         m_sprite=p_sprite;
+        m_texture=std::make_shared<sf::Texture>(*p_sprite->getTexture());
+        m_sprite->setTexture(*m_texture);
         m_begin_position=m_sprite->getPosition();
         animation_speed_info=animation_speed_type::IS_NORMAL;
 
@@ -109,9 +114,14 @@ namespace animation_engine
         return m_sprite->getPosition();
     }
 
-    sprite_ptr_t animated_object::get_sprite()
+    const_sprite_ptr_t animated_object::get_sprite()
     {
         return m_sprite;
+    }
+
+    texture_ptr_t animated_object::get_texture()
+    {
+        return m_texture;
     }
 
     //This will change the position of the sprite as well
@@ -228,7 +238,8 @@ namespace animation_engine
     {
         m_status=anim_obj_status::STATUS_READY;
         //Check if the sprite has a valid texture
-        if(m_sprite->getTexture()==nullptr)
+        sf::Vector2u texture_size=m_sprite->getTexture()->getSize();
+        if(m_sprite->getTexture()==nullptr||!texture_size.x||!texture_size.y)
         {
             m_status=anim_obj_status::STATUS_NOT_READY;
         }
