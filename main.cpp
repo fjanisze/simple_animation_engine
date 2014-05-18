@@ -4,8 +4,6 @@
 #include <gmock.h>
 #include <sstream>
 
-//#define RUN_REGRESSION
-
 #ifdef RUN_REGRESSION
 
 int main(int argc,char** argv)

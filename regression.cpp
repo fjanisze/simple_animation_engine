@@ -158,13 +158,13 @@ TEST_F(linear_interpolation_tests_use_x,second_test_x_is_zero)
     ASSERT_EQ(-20,positions[70].x);
 }
 
-class animated_object_basic : public ::testing::Test
+class animated_object_basic_testsuit : public ::testing::Test
 {
 public:
     sf::Sprite test_sprite;
     sf::Texture test_texture;
 
-    animated_object_basic()
+    animated_object_basic_testsuit()
     {
         test_sprite.setTexture(test_texture);
     }
@@ -173,7 +173,7 @@ public:
 using namespace animation_engine;
 
 
-TEST_F(animated_object_basic,build_with_texture_size_0)
+TEST_F(animated_object_basic_testsuit,build_with_texture_size_0)
 {
     anim_obj_ptr animated_object;
     try{
@@ -190,7 +190,7 @@ TEST_F(animated_object_basic,build_with_texture_size_0)
     ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,animated_object->prepare_to_render());//Texture size 0
 }
 
-TEST_F(animated_object_basic,build_and_set_proper_values)
+TEST_F(animated_object_basic_testsuit,build_and_set_proper_values)
 {
     anim_obj_ptr animated_object;
     test_texture.create(10,10);
@@ -218,7 +218,7 @@ namespace helper_objects
         MOCK_METHOD1(set_begin_position,sf::Vector2f(const sf::Vector2f&));
         MOCK_METHOD1(set_end_position,sf::Vector2f(const sf::Vector2f&));
         MOCK_METHOD0(repeat,void());
-        MOCK_METHOD0(stop,void());
+        MOCK_METHOD0(stop,anim_obj_status());
 
         MOCK_METHOD2(set_animation_speed,void(float,int));
         MOCK_METHOD1(get_animation_execution_time,float(int));
@@ -308,16 +308,113 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_if_stop_work)
 
     //frame_tick need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
     DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
-    ASSERT_EQ(1,engine.register_object(anim_obj1,animated_obj_completion_opt::ACTION_DONT_MOVE));
+    ASSERT_EQ(1,engine.register_object(anim_obj1,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
     ASSERT_EQ(2,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_DONT_MOVE));
     ASSERT_EQ(3,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_DONT_MOVE));
 
     EXPECT_CALL(*anim_obj1,frame_tick(_)).Times(1);
     EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
-    EXPECT_CALL(*anim_obj1,stop()).Times(1);
+    EXPECT_CALL(*anim_obj1,repeat()).Times(1);
     EXPECT_CALL(*anim_obj2,stop()).Times(2);
 
     ASSERT_EQ(draw_return_status::STATUS_OK,engine.draw());
-    ASSERT_TRUE(engine.check_if_all_completed());
+    ASSERT_FALSE(engine.check_if_all_completed());
+    ASSERT_FALSE(engine.check_if_all_completed_or_stopped());
 }
+
+struct animated_object_testsuit : public ::testing::Test
+{
+public:
+    anim_obj_ptr anim_obj1,
+                 anim_obj2,
+                 anim_obj3;
+    sf::Sprite sprite_1,
+               sprite_2,
+               sprite_3;
+    sf::Texture texture_1,
+                texture_2,
+                texture_3;
+    sf::RenderWindow render_window;
+    animated_object_testsuit()
+    {
+        load_texture();
+        anim_obj1=animated_object::create(sprite_1);
+        anim_obj2=animated_object::create(sprite_2);
+        anim_obj3=animated_object::create(sprite_3);
+
+        anim_obj1->set_begin_position(sf::Vector2f(10,10));
+        anim_obj1->set_end_position(sf::Vector2f(12,10));
+
+        anim_obj2->set_begin_position(sf::Vector2f(10,10));
+        anim_obj2->set_end_position(sf::Vector2f(10,12));
+
+        anim_obj3->set_begin_position(sf::Vector2f(2,2));
+        anim_obj3->set_end_position(sf::Vector2f(0,0));
+    }
+    void load_texture()
+    {
+        texture_1.create(10,10);
+        texture_2.create(20,20);
+        texture_3.create(30,30);
+        sprite_1.setTexture(texture_1);
+        sprite_2.setTexture(texture_2);
+        sprite_3.setTexture(texture_2);
+    }
+};
+
+TEST_F(animated_object_testsuit,not_ready)
+{
+    //The prepare_to_render call is missing
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj1->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj2->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj3->frame_tick(render_window));
+}
+
+TEST_F(animated_object_testsuit,four_frame_tick_and_complete)
+{
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->prepare_to_render());
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->prepare_to_render());
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj3->prepare_to_render());
+
+    for(short trigger_three_times=3;trigger_three_times>0;--trigger_three_times)
+    {
+        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->frame_tick(render_window));
+        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->frame_tick(render_window));
+        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj3->frame_tick(render_window));
+    }
+
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj1->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj2->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj3->frame_tick(render_window));
+}
+
+TEST_F(animated_object_testsuit,check_stopped_animation)
+{
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->prepare_to_render());
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->prepare_to_render());
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj3->prepare_to_render());
+
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj3->frame_tick(render_window));
+
+    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj1->stop());
+    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj2->stop());
+    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj3->stop());
+
+    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj1->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj2->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj3->frame_tick(render_window));
+}
+
+
+
+
+
+
+
+
+
+
+
 

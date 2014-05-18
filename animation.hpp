@@ -6,6 +6,8 @@
 #include <memory>
 #include <chrono>
 
+#define RUN_REGRESSION
+
 namespace animation_engine
 {
     using sprite_ptr_t=std::shared_ptr<sf::Sprite>;
@@ -38,7 +40,7 @@ namespace animation_engine
         virtual sf::Vector2f set_begin_position(const sf::Vector2f& position)=0;
         virtual sf::Vector2f set_end_position(const sf::Vector2f& new_position)=0;
         virtual void repeat()=0;
-        virtual void stop()=0;
+        virtual anim_obj_status stop()=0;
 
         virtual void set_animation_speed(float p_anim_duration,int p_frame_rate)=0;
         virtual float get_animation_execution_time(int p_frame_rate)=0;
@@ -122,7 +124,7 @@ namespace animation_engine
         sf::Vector2f set_begin_position(const sf::Vector2f& position);
         sf::Vector2f set_end_position(const sf::Vector2f& new_position);
         void repeat();
-        void stop();
+        anim_obj_status stop();
 
         anim_obj_status prepare_to_render();
         void set_animation_speed(float p_anim_duration,int p_frame_rate);
@@ -137,7 +139,7 @@ namespace animation_engine
     //Options that can be provided with the animated_object in order to specify its behavior
     enum animated_obj_completion_opt
     {
-        ACTION_DEFAULT,//The sprite will remain in the end position
+        ACTION_DEFAULT,//The sprite will be removed
         ACTION_REPEAT_ANIMATION, //Move back to be begin position and repeat the animation
         ACTION_DONT_MOVE,//Simply do not move the object
         ACTION_REMOVE_ANIMATED_OBJECT, //Remove the object from the animation_engine container
@@ -168,6 +170,7 @@ namespace animation_engine
         sf::RenderWindow& m_rnd_wnd;
         draw_return_status perf_action_on_completed_animation(anim_obj_container_entry& p_obj);
         int amount_of_obj_in_complete_state{0};
+        int amount_of_obj_in_stop_state{0};
     public:
         animation_engine(sf::RenderWindow& p_rnd_wnd, int p_frame_rate);
         int register_object(anim_obj_ptr p_obj,
@@ -175,6 +178,7 @@ namespace animation_engine
         draw_return_status draw();
         int clean_up();
         bool check_if_all_completed();
+        bool check_if_all_completed_or_stopped();
     };
 }
 
