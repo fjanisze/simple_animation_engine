@@ -163,6 +163,7 @@ class animated_object_basic_testsuit : public ::testing::Test
 public:
     sf::Sprite test_sprite;
     sf::Texture test_texture;
+    sf::RenderWindow render_window;
 
     animated_object_basic_testsuit()
     {
@@ -202,6 +203,25 @@ TEST_F(animated_object_basic_testsuit,build_and_set_proper_values)
         FAIL();
     }
     ASSERT_EQ(anim_obj_status::STATUS_READY,animated_object->prepare_to_render());
+}
+
+TEST_F(animated_object_basic_testsuit,set_same_begind_and_end_coord_speedslow)
+{
+    anim_obj_ptr animated_object;
+    test_texture.create(10,10);
+    test_sprite.setTexture(test_texture);
+    try{
+        animated_object=animated_object::create(test_sprite);
+    }catch(...)
+    {
+        FAIL();
+    }
+    ASSERT_EQ(sf::Vector2f(0,0),animated_object->set_end_position(sf::Vector2f(10,10)));
+    ASSERT_EQ(sf::Vector2f(0,0),animated_object->set_begin_position(sf::Vector2f(10,10)));
+    ASSERT_EQ(anim_obj_status::STATUS_READY,animated_object->prepare_to_render());
+    animated_object->set_animation_speed(2,60);//The values are not releavant, just need to have the object in IS_SLOWER state
+    //Since begin position==end position, the first frame_tick should trigger the completion of the animation
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,animated_object->frame_tick(render_window));
 }
 
 namespace helper_objects
