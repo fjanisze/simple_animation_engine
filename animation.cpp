@@ -169,7 +169,14 @@ namespace animation_engine
         }
         if(m_status==anim_obj_status::STATUS_READY)
         {
-            frame_tick_moving_obj_impl();
+            if(m_begin_position==m_end_position)
+            {
+                m_status=anim_obj_status::STATUS_COMPLETED;
+            }
+            else
+            {
+                frame_tick_moving_obj_impl();
+            }
         }
         else if(m_status==anim_obj_status::STATUS_STOPPED)
         {
