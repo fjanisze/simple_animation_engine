@@ -19,6 +19,7 @@ namespace animation_engine
         STATUS_NOT_READY, //Not ready...
         STATUS_FAULTY,    //Something bad happened
         STATUS_COMPLETED, //The animation is finished
+        STATUS_STOPPED,   //Do not move the object from the current position
     };
 
     /*
@@ -37,6 +38,7 @@ namespace animation_engine
         virtual sf::Vector2f set_begin_position(const sf::Vector2f& position)=0;
         virtual sf::Vector2f set_end_position(const sf::Vector2f& new_position)=0;
         virtual void repeat()=0;
+        virtual void stop()=0;
 
         virtual void set_animation_speed(float p_anim_duration,int p_frame_rate)=0;
         virtual float get_animation_execution_time(int p_frame_rate)=0;
@@ -112,6 +114,7 @@ namespace animation_engine
         animated_object(sprite_ptr_t p_sprite,
                         std::shared_ptr<I_interpolation_algorithm> interpolation=std::shared_ptr<linear_interpolation>(new linear_interpolation));
 
+        void frame_tick_moving_obj_impl();
     public:
         anim_obj_status frame_tick(sf::RenderWindow& p_rnd); //A new frame may be rendered
 
@@ -119,6 +122,7 @@ namespace animation_engine
         sf::Vector2f set_begin_position(const sf::Vector2f& position);
         sf::Vector2f set_end_position(const sf::Vector2f& new_position);
         void repeat();
+        void stop();
 
         anim_obj_status prepare_to_render();
         void set_animation_speed(float p_anim_duration,int p_frame_rate);
@@ -135,6 +139,7 @@ namespace animation_engine
     {
         ACTION_DEFAULT,//The sprite will remain in the end position
         ACTION_REPEAT_ANIMATION, //Move back to be begin position and repeat the animation
+        ACTION_DONT_MOVE,//Simply do not move the object
         ACTION_REMOVE_ANIMATED_OBJECT, //Remove the object from the animation_engine container
     };
 

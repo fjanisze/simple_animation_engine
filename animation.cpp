@@ -149,12 +149,37 @@ namespace animation_engine
         }
     }
 
+    void animated_object::stop()
+    {
+        if(m_status!=anim_obj_status::STATUS_NOT_READY&&
+           m_status!=anim_obj_status::STATUS_FAULTY)
+        {
+            m_status=anim_obj_status::STATUS_STOPPED;
+        }
+    }
+
     anim_obj_status animated_object::frame_tick(sf::RenderWindow& p_rnd)
     {
-        if(m_status!=anim_obj_status::STATUS_READY)
+        if(m_status==anim_obj_status::STATUS_NOT_READY||
+           m_status==anim_obj_status::STATUS_FAULTY)
         {
             return m_status;
         }
+        if(m_status==anim_obj_status::STATUS_READY)
+        {
+            frame_tick_moving_obj_impl();
+        }
+        else if(m_status==anim_obj_status::STATUS_STOPPED)
+        {
+            //Just use the current position and change nothing
+        }
+        //Draw the sprite
+        p_rnd.draw(*m_sprite);
+        return m_status;
+    }
+
+    void animated_object::frame_tick_moving_obj_impl()
+    {
         if(animation_speed_info==animation_speed_type::IS_SLOWER)
         {
             if(current_time>=expected_time_to_draw)//Reset the counter and do not change the position (skip the frame)
@@ -179,9 +204,6 @@ namespace animation_engine
         {
             m_sprite->setPosition(get_current_position());
         }
-        //Draw the sprite
-        p_rnd.draw(*m_sprite);
-        return m_status;
     }
 
     void animated_object::set_animation_speed(float p_anim_duration,int p_frame_rate)
@@ -338,6 +360,11 @@ namespace animation_engine
         case animated_obj_completion_opt::ACTION_REPEAT_ANIMATION:
             {
                 p_obj.m_anim_object->repeat();
+            }
+            break;
+        case animated_obj_completion_opt::ACTION_DONT_MOVE:
+            {
+                p_obj.m_anim_object->stop();
             }
             break;
         }

@@ -4,7 +4,7 @@
 #include <gmock.h>
 #include <sstream>
 
-#define RUN_REGRESSION
+//#define RUN_REGRESSION
 
 #ifdef RUN_REGRESSION
 
@@ -64,7 +64,7 @@ int main()
                         object->prepare_to_render();
                         std::cout<<"Animation time: "<<object->get_animation_execution_time(60)<<std::endl;
                         object->set_animation_speed(.5,60);
-                        engine.register_object(object,animation_engine::animated_obj_completion_opt::ACTION_REPEAT_ANIMATION);
+                        engine.register_object(object,animation_engine::animated_obj_completion_opt::ACTION_DONT_MOVE);
                         //Create a new one
                         sf::Sprite sprite(texture);
                         object=animation_engine::animated_object::create(sprite);

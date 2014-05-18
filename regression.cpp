@@ -163,6 +163,7 @@ class animated_object_basic : public ::testing::Test
 public:
     sf::Sprite test_sprite;
     sf::Texture test_texture;
+
     animated_object_basic()
     {
         test_sprite.setTexture(test_texture);
@@ -217,6 +218,7 @@ namespace helper_objects
         MOCK_METHOD1(set_begin_position,sf::Vector2f(const sf::Vector2f&));
         MOCK_METHOD1(set_end_position,sf::Vector2f(const sf::Vector2f&));
         MOCK_METHOD0(repeat,void());
+        MOCK_METHOD0(stop,void());
 
         MOCK_METHOD2(set_animation_speed,void(float,int));
         MOCK_METHOD1(get_animation_execution_time,float(int));
@@ -298,5 +300,24 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_delete_action)
     ASSERT_EQ(draw_return_status::STATUS_CLEANUP_NEEDED,engine.draw());
     ASSERT_TRUE(engine.check_if_all_completed());
     ASSERT_EQ(0,engine.clean_up()); //Nothing should be left in the container
+}
+
+TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_if_stop_work)
+{
+    animation_engine::animation_engine engine(render_window,40);
+
+    //frame_tick need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
+    DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
+    ASSERT_EQ(1,engine.register_object(anim_obj1,animated_obj_completion_opt::ACTION_DONT_MOVE));
+    ASSERT_EQ(2,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_DONT_MOVE));
+    ASSERT_EQ(3,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_DONT_MOVE));
+
+    EXPECT_CALL(*anim_obj1,frame_tick(_)).Times(1);
+    EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
+    EXPECT_CALL(*anim_obj1,stop()).Times(1);
+    EXPECT_CALL(*anim_obj2,stop()).Times(2);
+
+    ASSERT_EQ(draw_return_status::STATUS_OK,engine.draw());
+    ASSERT_TRUE(engine.check_if_all_completed());
 }
 
