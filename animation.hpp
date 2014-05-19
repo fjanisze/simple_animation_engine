@@ -10,12 +10,24 @@
 
 namespace animation_engine
 {
+
+    /*
+     * Interface for the class containing the interpolation algorithms
+     */
+    class I_interpolation_algorithm
+    {
+    public:
+        virtual int calculate_interpolation(std::vector<sf::Vector2f>& object_positions,
+                                            const sf::Vector2f& p_begin,
+                                            const sf::Vector2f& p_end) = 0;
+    };
+
     using sprite_ptr_t=std::shared_ptr<sf::Sprite>;
     using const_sprite_ptr_t=std::shared_ptr<const sf::Sprite>;
     using texture_ptr_t=std::shared_ptr<sf::Texture>;
 
-    //Possible state for the animated_object class
-    enum anim_obj_status
+    //Possible state for the animated_texture class
+    enum class anim_obj_status
     {
         STATUS_READY,     //Ready to be drawn
         STATUS_NOT_READY, //Not ready...
@@ -30,41 +42,55 @@ namespace animation_engine
      * and the moving speed. By default the object moves straight
      * from the initial position to the end position.
      */
-    class I_animate_object
+    class animated_object
     {
+    protected:
+        anim_obj_status m_status;
+        sf::Vector2f m_begin_position;
+        sf::Vector2f m_end_position;//This is where this sprite is moving
+        sf::Vector2f m_cur_position;
+
+        std::vector<sf::Vector2f> object_positions;
+        int m_current_position{0};
+        sf::Vector2f get_current_position();
+
+        std::shared_ptr<I_interpolation_algorithm> functions;
+
+        enum animation_speed_type
+        {
+            IS_NORMAL=0,
+            IS_SLOWER,
+            IS_FASTER
+        }animation_speed_info;
+
+        double single_frame_time_count{0};
+        double single_time_increment{0};
+        double current_time{0};
+        double expected_time_to_draw{0};
+
+        sf::Vector2f frame_tick_moving_obj_impl();
+        virtual void draw_impl(sf::RenderWindow& p_rnd)=0;
     public:
-        virtual anim_obj_status frame_tick(sf::RenderWindow& p_rnd)=0;
+        animated_object();
+        virtual anim_obj_status frame_tick(sf::RenderWindow& p_rnd);
         virtual anim_obj_status prepare_to_render()=0;
 
         virtual sf::Vector2f get_position()=0;
         virtual sf::Vector2f set_begin_position(const sf::Vector2f& position)=0;
         virtual sf::Vector2f set_end_position(const sf::Vector2f& new_position)=0;
-        virtual void repeat()=0;
-        virtual anim_obj_status stop()=0;
+        virtual void repeat();
+        virtual anim_obj_status stop();
 
-        virtual void set_animation_speed(float p_anim_duration,int p_frame_rate)=0;
-        virtual float get_animation_execution_time(int p_frame_rate)=0;
+        virtual void set_animation_speed(float p_anim_duration,int p_frame_rate);
+        virtual float get_animation_execution_time(int p_frame_rate);
 
-        virtual const_sprite_ptr_t get_sprite()=0;
-        virtual texture_ptr_t get_texture()=0;
-        virtual ~I_animate_object()=0;
+        virtual ~animated_object()=0;
     };
 
-    class animated_object;
+    class animated_texture;
     class animation_engine;
 
-    using anim_obj_ptr=std::shared_ptr<I_animate_object>;
-
-    /*
-     * Interface for the class containing the interpolation algorithms
-     */
-    class I_interpolation_algorithm
-    {
-    public:
-        virtual int calculate_interpolation(std::vector<sf::Vector2f>& object_positions,
-                                            const sf::Vector2f& p_begin,
-                                            const sf::Vector2f& p_end) = 0;
-    };
+    using anim_obj_ptr=std::shared_ptr<animated_object>;
 
     /*
      * Implement a set of function needed for the animation
@@ -87,56 +113,27 @@ namespace animation_engine
                                     const sf::Vector2f& p_end);
     };
 
-    class animated_object : public I_animate_object
+    class animated_texture : public animated_object
     {
-        anim_obj_status m_status;
         texture_ptr_t m_texture;
-
         sprite_ptr_t m_sprite;
-        sf::Vector2f m_begin_position;
-        sf::Vector2f m_end_position;//This is where this sprite is moving
 
-        std::vector<sf::Vector2f> object_positions;
-        int m_current_position{0};
-        sf::Vector2f get_current_position();
-
-        std::shared_ptr<I_interpolation_algorithm> functions;
-
-        enum animation_speed_type
-        {
-            IS_NORMAL=0,
-            IS_SLOWER,
-            IS_FASTER
-        }animation_speed_info;
-        double single_frame_time_count{0};
-        double single_time_increment{0};
-        double current_time{0};
-        double expected_time_to_draw{0};
-
-        animated_object(sprite_ptr_t p_sprite,
+        animated_texture(sprite_ptr_t p_sprite,
                         std::shared_ptr<I_interpolation_algorithm> interpolation=std::shared_ptr<linear_interpolation>(new linear_interpolation));
-
-        void frame_tick_moving_obj_impl();
+        void draw_impl(sf::RenderWindow& p_rnd);
     public:
-        anim_obj_status frame_tick(sf::RenderWindow& p_rnd); //A new frame may be rendered
-
         sf::Vector2f get_position();
         sf::Vector2f set_begin_position(const sf::Vector2f& position);
         sf::Vector2f set_end_position(const sf::Vector2f& new_position);
-        void repeat();
-        anim_obj_status stop();
-
         anim_obj_status prepare_to_render();
-        void set_animation_speed(float p_anim_duration,int p_frame_rate);
-        float get_animation_execution_time(int p_frame_rate);
 
         const_sprite_ptr_t get_sprite();
         texture_ptr_t get_texture();
         static anim_obj_ptr create(const sf::Sprite& p_sprite);
-        ~animated_object(){}
+        ~animated_texture(){}
     };
 
-    //Options that can be provided with the animated_object in order to specify its behavior
+    //Options that can be provided with the animated_texture in order to specify its behavior
     enum animated_obj_completion_opt
     {
         ACTION_DEFAULT,//The sprite will be removed
@@ -153,7 +150,7 @@ namespace animation_engine
     };
 
     /*
-     * Container for one or more animated_objects,
+     * Container for one or more animated_textures,
      * each of which will be displayed on the screen
      */
     struct anim_obj_container_entry

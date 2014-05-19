@@ -86,59 +86,10 @@ namespace animation_engine
     //
     ///////////////////////////////////////////////////////////////////
 
-    I_animate_object::~I_animate_object(){}
-
-    //Create an empty sprite pointer
-    anim_obj_ptr animated_object::create(const sf::Sprite& p_sprite)
+    animated_object::animated_object()
     {
-        sprite_ptr_t sprite_ptr=std::make_shared<sf::Sprite>(p_sprite);
-        anim_obj_ptr new_object(new animated_object(sprite_ptr));
-        return new_object;
-    }
-
-
-    animated_object::animated_object(sprite_ptr_t p_sprite,
-                                     std::shared_ptr<I_interpolation_algorithm> interpolation)
-    {
-        functions=interpolation;
-        m_sprite=p_sprite;
-        m_texture=std::make_shared<sf::Texture>(*p_sprite->getTexture());
-        m_sprite->setTexture(*m_texture);
-        m_begin_position=m_sprite->getPosition();
         m_status=anim_obj_status::STATUS_NOT_READY;
         animation_speed_info=animation_speed_type::IS_NORMAL;
-
-    }
-
-    sf::Vector2f animated_object::get_position()
-    {
-        return m_sprite->getPosition();
-    }
-
-    const_sprite_ptr_t animated_object::get_sprite()
-    {
-        return m_sprite;
-    }
-
-    texture_ptr_t animated_object::get_texture()
-    {
-        return m_texture;
-    }
-
-    //This will change the position of the sprite as well
-    sf::Vector2f animated_object::set_begin_position(const sf::Vector2f& position)
-    {
-        sf::Vector2f last_begin_pos=m_sprite->getPosition();
-        m_sprite->setPosition(position);
-        m_begin_position=position;
-        return last_begin_pos;
-    }
-
-    sf::Vector2f animated_object::set_end_position(const sf::Vector2f& new_position)
-    {
-        sf::Vector2f last_end_position=m_end_position;
-        m_end_position=new_position;
-        return last_end_position;
     }
 
     void animated_object::repeat()
@@ -184,19 +135,19 @@ namespace animation_engine
         }
 #ifndef RUN_REGRESSION //Not very elegant, but works..
         //Draw the sprite
-        p_rnd.draw(*m_sprite);
+        draw_impl(p_rnd);
 #endif
         return m_status;
     }
 
-    void animated_object::frame_tick_moving_obj_impl()
+    sf::Vector2f animated_object::frame_tick_moving_obj_impl()
     {
         if(animation_speed_info==animation_speed_type::IS_SLOWER)
         {
             if(current_time>=expected_time_to_draw)//Reset the counter and do not change the position (skip the frame)
             {
                 expected_time_to_draw+=single_time_increment;
-                m_sprite->setPosition(get_current_position());
+                m_cur_position=get_current_position();
             }
             current_time+=single_frame_time_count;
         }
@@ -209,12 +160,13 @@ namespace animation_engine
             }
             expected_time_to_draw+=single_frame_time_count;
             --m_current_position;
-            m_sprite->setPosition(get_current_position());
+            m_cur_position=get_current_position();
         }
         else //IS_NORMAL
         {
-            m_sprite->setPosition(get_current_position());
+            m_cur_position=get_current_position();
         }
+        return m_cur_position;
     }
 
     sf::Vector2f animated_object::get_current_position()
@@ -267,7 +219,41 @@ namespace animation_engine
 
     }
 
-    anim_obj_status animated_object::prepare_to_render()
+    float animated_object::get_animation_execution_time(int p_frame_rate)
+    {
+        return (float)object_positions.size()/p_frame_rate;
+    }
+
+    ///////////////////////////////////////////////////////////////////
+    //
+    //
+    //	Follow the implementation for animated_texture
+    //
+    //
+    ///////////////////////////////////////////////////////////////////
+
+    animated_object::~animated_object(){}
+
+    //Create an empty sprite pointer
+    anim_obj_ptr animated_texture::create(const sf::Sprite& p_sprite)
+    {
+        sprite_ptr_t sprite_ptr=std::make_shared<sf::Sprite>(p_sprite);
+        anim_obj_ptr new_object(new animated_texture(sprite_ptr));
+        return new_object;
+    }
+
+
+    animated_texture::animated_texture(sprite_ptr_t p_sprite,
+                                     std::shared_ptr<I_interpolation_algorithm> interpolation)
+    {
+        functions=interpolation;
+        m_sprite=p_sprite;
+        m_texture=std::make_shared<sf::Texture>(*p_sprite->getTexture());
+        m_sprite->setTexture(*m_texture);
+        m_begin_position=m_sprite->getPosition();
+    }
+
+    anim_obj_status animated_texture::prepare_to_render()
     {
         m_status=anim_obj_status::STATUS_READY;
         //Check if the sprite has a valid texture
@@ -284,16 +270,47 @@ namespace animation_engine
         }
         m_current_position=0;
         //Set begin position
+        m_cur_position=m_begin_position;
         m_sprite->setPosition(m_begin_position);
         return m_status;
     }
 
-    float animated_object::get_animation_execution_time(int p_frame_rate)
+    sf::Vector2f animated_texture::get_position()
     {
-        return (float)object_positions.size()/p_frame_rate;
+        return m_sprite->getPosition();
     }
 
+    //This will change the position of the sprite as well
+    sf::Vector2f animated_texture::set_begin_position(const sf::Vector2f& position)
+    {
+        sf::Vector2f last_begin_pos=m_sprite->getPosition();
+        m_sprite->setPosition(position);
+        m_begin_position=position;
+        return last_begin_pos;
+    }
 
+    sf::Vector2f animated_texture::set_end_position(const sf::Vector2f& new_position)
+    {
+        sf::Vector2f last_end_position=m_end_position;
+        m_end_position=new_position;
+        return last_end_position;
+    }
+
+    void animated_texture::draw_impl(sf::RenderWindow& p_rnd)
+    {
+        m_sprite->setPosition(m_cur_position);
+        p_rnd.draw(*m_sprite);
+    }
+
+    const_sprite_ptr_t animated_texture::get_sprite()
+    {
+        return m_sprite;
+    }
+
+    texture_ptr_t animated_texture::get_texture()
+    {
+        return m_texture;
+    }
 
     ///////////////////////////////////////////////////////////////////
     //
@@ -392,7 +409,7 @@ namespace animation_engine
         return draw_return_status::STATUS_OK;
     }
 
-    //Return true if all the animated_object are in the STATUS_COMPLETE state
+    //Return true if all the animated_texture are in the STATUS_COMPLETE state
     bool animation_engine::check_if_all_completed()
     {
         return amount_of_obj_in_complete_state==m_object_container.size();

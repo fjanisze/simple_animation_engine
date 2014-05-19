@@ -28,7 +28,7 @@ int main()
 
 
     sf::Sprite sprite(texture);
-    animation_engine::anim_obj_ptr object=animation_engine::animated_object::create(sprite);
+    animation_engine::anim_obj_ptr object=animation_engine::animated_texture::create(sprite);
 
     animation_engine::animation_engine engine(app,20);
 
@@ -62,10 +62,10 @@ int main()
                         object->prepare_to_render();
                         std::cout<<"Animation time: "<<object->get_animation_execution_time(60)<<std::endl;
                         object->set_animation_speed(.5,60);
-                        engine.register_object(object,animation_engine::animated_obj_completion_opt::ACTION_DONT_MOVE);
+                        engine.register_object(object,animation_engine::animated_obj_completion_opt::ACTION_REPEAT_ANIMATION);
                         //Create a new one
                         sf::Sprite sprite(texture);
-                        object=animation_engine::animated_object::create(sprite);
+                        object=animation_engine::animated_texture::create(sprite);
                         begin_point_ready=false;
                     }
                 }

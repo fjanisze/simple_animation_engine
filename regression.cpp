@@ -178,7 +178,7 @@ TEST_F(animated_object_basic_testsuit,build_with_texture_size_0)
 {
     anim_obj_ptr animated_object;
     try{
-        animated_object=animated_object::create(test_sprite);
+        animated_object=animated_texture::create(test_sprite);
     }catch(...)
     {
         FAIL();
@@ -197,7 +197,7 @@ TEST_F(animated_object_basic_testsuit,build_and_set_proper_values)
     test_texture.create(10,10);
     test_sprite.setTexture(test_texture);
     try{
-        animated_object=animated_object::create(test_sprite);
+        animated_object=animated_texture::create(test_sprite);
     }catch(...)
     {
         FAIL();
@@ -211,7 +211,7 @@ TEST_F(animated_object_basic_testsuit,set_same_begind_and_end_coord_speedslow)
     test_texture.create(10,10);
     test_sprite.setTexture(test_texture);
     try{
-        animated_object=animated_object::create(test_sprite);
+        animated_object=animated_texture::create(test_sprite);
     }catch(...)
     {
         FAIL();
@@ -226,7 +226,7 @@ TEST_F(animated_object_basic_testsuit,set_same_begind_and_end_coord_speedslow)
 
 namespace helper_objects
 {
-    struct animated_object_mock : public I_animate_object
+    struct animated_object_mock : public animated_object
     {
         anim_obj_status m_status;
 
@@ -234,17 +234,16 @@ namespace helper_objects
         MOCK_METHOD0(prepare_to_render,anim_obj_status());
         MOCK_METHOD1(set_animation_speed,int(int));
 
+        MOCK_METHOD1(draw_impl,void(sf::RenderWindow&));
         MOCK_METHOD0(get_position,sf::Vector2f());
         MOCK_METHOD1(set_begin_position,sf::Vector2f(const sf::Vector2f&));
         MOCK_METHOD1(set_end_position,sf::Vector2f(const sf::Vector2f&));
+
         MOCK_METHOD0(repeat,void());
         MOCK_METHOD0(stop,anim_obj_status());
 
         MOCK_METHOD2(set_animation_speed,void(float,int));
         MOCK_METHOD1(get_animation_execution_time,float(int));
-
-        MOCK_METHOD0(get_sprite,const_sprite_ptr_t());
-        MOCK_METHOD0(get_texture,texture_ptr_t());
     };
 }
 
@@ -358,9 +357,9 @@ public:
     animated_object_testsuit()
     {
         load_texture();
-        anim_obj1=animated_object::create(sprite_1);
-        anim_obj2=animated_object::create(sprite_2);
-        anim_obj3=animated_object::create(sprite_3);
+        anim_obj1=animated_texture::create(sprite_1);
+        anim_obj2=animated_texture::create(sprite_2);
+        anim_obj3=animated_texture::create(sprite_3);
 
         anim_obj1->set_begin_position(sf::Vector2f(10,10));
         anim_obj1->set_end_position(sf::Vector2f(12,10));
