@@ -11,10 +11,10 @@ namespace animation_engine
     ///////////////////////////////////////////////////////////////////
 
     //Create an empty sprite pointer
-    anim_obj_ptr animated_texture::create(const sf::Sprite& p_sprite)
+    anim_texture_ptr animated_texture::create(const sf::Sprite& p_sprite)
     {
         sprite_ptr_t sprite_ptr=std::make_shared<sf::Sprite>(p_sprite);
-        anim_obj_ptr new_object(new animated_texture(sprite_ptr));
+        anim_texture_ptr new_object(new animated_texture(sprite_ptr));
         return new_object;
     }
 
@@ -37,6 +37,7 @@ namespace animation_engine
         if(m_sprite->getTexture()==nullptr||!texture_size.x||!texture_size.y)
         {
             m_status=anim_obj_status::STATUS_NOT_READY;
+            return m_status;
         }
         int num=functions->calculate_interpolation(object_positions,m_begin_position,
                                                     m_end_position);

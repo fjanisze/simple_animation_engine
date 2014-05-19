@@ -430,6 +430,7 @@ class animation_text_testsuit : public ::testing::Test
 {
 public:
     sf::Text m_text1;
+    sf::Font m_font1;
     animation_text_testsuit()
     {
     }
@@ -437,8 +438,14 @@ public:
 
 TEST_F(animation_text_testsuit,basic_creation)
 {
-    anim_obj_ptr anim_obj1=animation_text::create(m_text1);
+    anim_text_ptr anim_obj1=animated_text::create(m_text1);
     ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj1->prepare_to_render());
+    ASSERT_EQ("",anim_obj1->set_text("Hello World"));
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj1->prepare_to_render());
+    //Add the font
+    font_ptr_t test_font=std::make_shared<sf::Font>(m_font1);
+    anim_obj1->set_font(test_font);
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->prepare_to_render());
 }
 
 
