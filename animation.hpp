@@ -23,6 +23,10 @@ namespace animation_engine
     };
 
     using sprite_ptr_t=std::shared_ptr<sf::Sprite>;
+    using text_ptr_t=std::shared_ptr<sf::Text>;
+    using const_text_ptr_t=std::shared_ptr<const sf::Text>;
+    using font_ptr_t=std::shared_ptr<sf::Font>;
+    using const_font_ptr_t=std::shared_ptr<const sf::Font>;
     using const_sprite_ptr_t=std::shared_ptr<const sf::Sprite>;
     using texture_ptr_t=std::shared_ptr<sf::Texture>;
 
@@ -131,6 +135,28 @@ namespace animation_engine
         texture_ptr_t get_texture();
         static anim_obj_ptr create(const sf::Sprite& p_sprite);
         ~animated_texture(){}
+    };
+
+    class animation_text : public animated_object
+    {
+        text_ptr_t m_text;
+        font_ptr_t m_font;
+
+        animation_text(text_ptr_t p_text,
+                       std::shared_ptr<I_interpolation_algorithm> interpolation=std::shared_ptr<linear_interpolation>(new linear_interpolation));
+        void draw_impl(sf::RenderWindow& p_rnd);
+    public:
+        static anim_obj_ptr create(const sf::Text& p_text);
+
+        anim_obj_status prepare_to_render();
+
+        sf::Vector2f get_position();
+        sf::Vector2f set_begin_position(const sf::Vector2f& position);
+        sf::Vector2f set_end_position(const sf::Vector2f& new_position);
+
+        const_text_ptr_t get_text();
+        const_font_ptr_t get_font();
+
     };
 
     //Options that can be provided with the animated_texture in order to specify its behavior

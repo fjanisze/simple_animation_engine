@@ -426,8 +426,20 @@ TEST_F(animated_object_testsuit,check_stopped_animation)
     ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj3->frame_tick(render_window));
 }
 
+class animation_text_testsuit : public ::testing::Test
+{
+public:
+    sf::Text m_text1;
+    animation_text_testsuit()
+    {
+    }
+};
 
-
+TEST_F(animation_text_testsuit,basic_creation)
+{
+    anim_obj_ptr anim_obj1=animation_text::create(m_text1);
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj1->prepare_to_render());
+}
 
 
 
