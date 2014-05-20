@@ -14,6 +14,8 @@ int main(int argc,char** argv)
 
 #else
 
+//#define SPRITE
+
 int main()
 {
     sf::RenderWindow app;
@@ -26,11 +28,24 @@ int main()
         return -1;
     }
 
-
+#ifdef SPRITE
     sf::Sprite sprite(texture);
-    animation_engine::anim_obj_ptr object=animation_engine::animated_texture::create(sprite);
-
-    animation_engine::animation_engine engine(app,20);
+    animation_engine::anim_texture_ptr object=animation_engine::animated_texture::create(sprite);
+#else
+    sf::Text text;
+    text.setString("Hello World");
+    text.setCharacterSize(20);
+    text.setColor(sf::Color::Red);
+    text.setStyle(sf::Text::Bold);
+    sf::Font font;
+    if(!font.loadFromFile("consola.ttf"))
+    {
+        return -1;
+    }
+    animation_engine::anim_text_ptr object=animation_engine::animated_text::create(text);
+    object->set_font(std::make_shared<sf::Font>(font));
+#endif
+    animation_engine::animation_engine engine(app,60);
 
     bool begin_point_ready=false;
 
@@ -64,8 +79,13 @@ int main()
                         object->set_animation_speed(.5,60);
                         engine.register_object(object,animation_engine::animated_obj_completion_opt::ACTION_REPEAT_ANIMATION);
                         //Create a new one
+#ifdef SPRITE
                         sf::Sprite sprite(texture);
                         object=animation_engine::animated_texture::create(sprite);
+#else
+                        object=animation_engine::animated_text::create(text);
+                        object->set_font(std::make_shared<sf::Font>(font));
+#endif
                         begin_point_ready=false;
                     }
                 }

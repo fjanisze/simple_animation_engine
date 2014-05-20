@@ -134,7 +134,6 @@ namespace animation_engine
             //Just use the current position and change nothing
         }
 #ifndef RUN_REGRESSION //Not very elegant, but works..
-        //Draw the sprite
         draw_impl(p_rnd);
 #endif
         return m_status;

@@ -6,7 +6,7 @@
 #include <memory>
 #include <chrono>
 
-#define RUN_REGRESSION
+//#define RUN_REGRESSION
 
 namespace animation_engine
 {

@@ -431,21 +431,25 @@ class animation_text_testsuit : public ::testing::Test
 public:
     sf::Text m_text1;
     sf::Font m_font1;
-    animation_text_testsuit()
+    font_ptr_t test_font;
+    anim_text_ptr anim_obj1;
+    sf::Vector2f begin_position1{10,10};
+    sf::Vector2f end_position1{20,20};
+    animation_text_testsuit() : anim_obj1(animated_text::create(m_text1)),
+                                test_font(std::make_shared<sf::Font>(m_font1))
     {
     }
 };
 
 TEST_F(animation_text_testsuit,basic_creation)
 {
-    anim_text_ptr anim_obj1=animated_text::create(m_text1);
     ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj1->prepare_to_render());
     ASSERT_EQ("",anim_obj1->set_text("Hello World"));
     ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj1->prepare_to_render());
     //Add the font
-    font_ptr_t test_font=std::make_shared<sf::Font>(m_font1);
     anim_obj1->set_font(test_font);
     ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->prepare_to_render());
+    ASSERT_EQ("Hello World",anim_obj1->set_text(""));
 }
 
 
