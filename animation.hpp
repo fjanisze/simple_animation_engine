@@ -40,6 +40,7 @@ namespace animation_engine
         STATUS_STOPPED,   //Do not move the object from the current position
     };
 
+
     /*
      * The object which can be animated on the screen,
      * the starting and ending position need to be provided,

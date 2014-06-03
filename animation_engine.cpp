@@ -63,7 +63,7 @@ namespace animation_engine
             m_object_container.clear();
             return 0;
         }
-        std::list<anim_obj_container_entry>::iterator it=m_object_container.begin();
+        auto it=m_object_container.begin();
         while(it!=m_object_container.end())
         {
             if(it->m_to_be_removed)
