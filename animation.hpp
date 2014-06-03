@@ -6,7 +6,7 @@
 #include <memory>
 #include <chrono>
 
-//#define RUN_REGRESSION
+#define RUN_REGRESSION
 
 namespace animation_engine
 {
@@ -77,7 +77,8 @@ namespace animation_engine
         virtual void draw_impl(sf::RenderWindow& p_rnd)=0;
     public:
         animated_object();
-        virtual anim_obj_status frame_tick(sf::RenderWindow& p_rnd);
+        //virtual void next_frame_tick();
+        virtual anim_obj_status draw(sf::RenderWindow& p_rnd);
         virtual anim_obj_status prepare_to_render()=0;
 
         virtual sf::Vector2f get_position()=0;

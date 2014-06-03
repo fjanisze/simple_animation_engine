@@ -111,7 +111,7 @@ namespace animation_engine
         return m_status;
     }
 
-    anim_obj_status animated_object::frame_tick(sf::RenderWindow& p_rnd)
+    anim_obj_status animated_object::draw(sf::RenderWindow& p_rnd)
     {
         if(m_status==anim_obj_status::STATUS_NOT_READY||
            m_status==anim_obj_status::STATUS_FAULTY)

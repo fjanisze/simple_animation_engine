@@ -220,8 +220,8 @@ TEST_F(animated_object_basic_testsuit,set_same_begind_and_end_coord_speedslow)
     ASSERT_EQ(sf::Vector2f(0,0),animated_object->set_begin_position(sf::Vector2f(10,10)));
     ASSERT_EQ(anim_obj_status::STATUS_READY,animated_object->prepare_to_render());
     animated_object->set_animation_speed(2,60);//The values are not releavant, just need to have the object in IS_SLOWER state
-    //Since begin position==end position, the first frame_tick should trigger the completion of the animation
-    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,animated_object->frame_tick(render_window));
+    //Since begin position==end position, the first draw should trigger the completion of the animation
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,animated_object->draw(render_window));
 }
 
 namespace helper_objects
@@ -230,7 +230,7 @@ namespace helper_objects
     {
         anim_obj_status m_status;
 
-        MOCK_METHOD1(frame_tick,animation_engine::anim_obj_status(sf::RenderWindow&));
+        MOCK_METHOD1(draw,animation_engine::anim_obj_status(sf::RenderWindow&));
         MOCK_METHOD0(prepare_to_render,anim_obj_status());
         MOCK_METHOD1(set_animation_speed,int(int));
 
@@ -262,7 +262,7 @@ struct animation_engine_testsuit : public ::testing::Test
     {
         anim_obj1=std::shared_ptr<anim_obj_strict_mock>(new anim_obj_strict_mock);
         anim_obj2=std::shared_ptr<anim_obj_strict_mock>(new anim_obj_strict_mock);
-        //Default return value for frame_tick
+        //Default return value for draw
         DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_READY);
         DefaultValue<sf::Vector2f>::Set(sf::Vector2f(0,0));
     }
@@ -275,8 +275,8 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_draw)
     ASSERT_EQ(2,engine.register_object(anim_obj2));
     ASSERT_EQ(3,engine.register_object(anim_obj2));
 
-    EXPECT_CALL(*anim_obj1,frame_tick(_)).Times(1);
-    EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
+    EXPECT_CALL(*anim_obj1,draw(_)).Times(1);
+    EXPECT_CALL(*anim_obj2,draw(_)).Times(2);
 
     ASSERT_EQ(draw_return_status::STATUS_OK,engine.draw());
     ASSERT_FALSE(engine.check_if_all_completed());
@@ -286,15 +286,15 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_repeat_action)
 {
     animation_engine::animation_engine engine(render_window,40);
 
-    //frame_tick need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
+    //draw need to return STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
     DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
 
     ASSERT_EQ(1,engine.register_object(anim_obj1,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
     ASSERT_EQ(2,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
     ASSERT_EQ(3,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
 
-    EXPECT_CALL(*anim_obj1,frame_tick(_)).Times(1);
-    EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
+    EXPECT_CALL(*anim_obj1,draw(_)).Times(1);
+    EXPECT_CALL(*anim_obj2,draw(_)).Times(2);
     EXPECT_CALL(*anim_obj1,repeat()).Times(1);
     EXPECT_CALL(*anim_obj2,repeat()).Times(2);
 
@@ -306,15 +306,15 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_delete_action)
 {
     animation_engine::animation_engine engine(render_window,40);
 
-    //frame_tick need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
+    //draw need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
     DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
 
     ASSERT_EQ(1,engine.register_object(anim_obj1,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
     ASSERT_EQ(2,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
     ASSERT_EQ(3,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
 
-    EXPECT_CALL(*anim_obj1,frame_tick(_)).Times(1);
-    EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
+    EXPECT_CALL(*anim_obj1,draw(_)).Times(1);
+    EXPECT_CALL(*anim_obj2,draw(_)).Times(2);
 
     ASSERT_EQ(draw_return_status::STATUS_CLEANUP_NEEDED,engine.draw());
     ASSERT_TRUE(engine.check_if_all_completed());
@@ -325,14 +325,14 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_if_stop_work)
 {
     animation_engine::animation_engine engine(render_window,40);
 
-    //frame_tick need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
+    //draw need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
     DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
     ASSERT_EQ(1,engine.register_object(anim_obj1,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
     ASSERT_EQ(2,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_DONT_MOVE));
     ASSERT_EQ(3,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_DONT_MOVE));
 
-    EXPECT_CALL(*anim_obj1,frame_tick(_)).Times(1);
-    EXPECT_CALL(*anim_obj2,frame_tick(_)).Times(2);
+    EXPECT_CALL(*anim_obj1,draw(_)).Times(1);
+    EXPECT_CALL(*anim_obj2,draw(_)).Times(2);
     EXPECT_CALL(*anim_obj1,repeat()).Times(1);
     EXPECT_CALL(*anim_obj2,stop()).Times(2);
 
@@ -384,12 +384,12 @@ public:
 TEST_F(animated_object_testsuit,not_ready)
 {
     //The prepare_to_render call is missing
-    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj1->frame_tick(render_window));
-    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj2->frame_tick(render_window));
-    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj3->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj1->draw(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj2->draw(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_NOT_READY,anim_obj3->draw(render_window));
 }
 
-TEST_F(animated_object_testsuit,four_frame_tick_and_complete)
+TEST_F(animated_object_testsuit,four_draw_and_complete)
 {
     ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->prepare_to_render());
     ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->prepare_to_render());
@@ -397,14 +397,14 @@ TEST_F(animated_object_testsuit,four_frame_tick_and_complete)
 
     for(short trigger_three_times=3;trigger_three_times>0;--trigger_three_times)
     {
-        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->frame_tick(render_window));
-        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->frame_tick(render_window));
-        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj3->frame_tick(render_window));
+        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->draw(render_window));
+        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->draw(render_window));
+        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj3->draw(render_window));
     }
 
-    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj1->frame_tick(render_window));
-    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj2->frame_tick(render_window));
-    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj3->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj1->draw(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj2->draw(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj3->draw(render_window));
 }
 
 TEST_F(animated_object_testsuit,check_stopped_animation)
@@ -413,17 +413,17 @@ TEST_F(animated_object_testsuit,check_stopped_animation)
     ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->prepare_to_render());
     ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj3->prepare_to_render());
 
-    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->frame_tick(render_window));
-    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->frame_tick(render_window));
-    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj3->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->draw(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->draw(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj3->draw(render_window));
 
     ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj1->stop());
     ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj2->stop());
     ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj3->stop());
 
-    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj1->frame_tick(render_window));
-    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj2->frame_tick(render_window));
-    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj3->frame_tick(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj1->draw(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj2->draw(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_STOPPED,anim_obj3->draw(render_window));
 }
 
 class animation_text_testsuit : public ::testing::Test

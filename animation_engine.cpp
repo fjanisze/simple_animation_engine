@@ -38,7 +38,7 @@ namespace animation_engine
                 status=draw_return_status::STATUS_CLEANUP_NEEDED;
                 continue; //Skip the objects which should be removed
             }
-            obj_status=elem.m_anim_object->frame_tick(m_rnd_wnd);
+            obj_status=elem.m_anim_object->draw(m_rnd_wnd);
             if(obj_status==anim_obj_status::STATUS_COMPLETED)
             {
                 status=perf_action_on_completed_animation(elem);
