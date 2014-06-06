@@ -212,20 +212,6 @@ namespace animation_engine
         bool check_if_all_completed();
         bool check_if_all_completed_or_stopped();
     };
-
-namespace refresh_mechanism
-{
-    class animation_engine_refresh
-    {
-        float m_internal_clock_rate{1};
-        std::thread m_refresh_thread;
-        void refresh_all();
-    public:
-        float set_refresh_internal_clock(float p_internal_clock_rate);
-        std::thread::id start_internal_refresh_clock();
-        ~animation_engine_refresh();
-    };
-}//refresh_mechanism
 }
 
 #endif

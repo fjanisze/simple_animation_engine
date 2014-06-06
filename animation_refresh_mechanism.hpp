@@ -1,9 +1,30 @@
-#include "animation.hpp"
 #include <iostream>
+#include <functional>
 
 namespace animation_engine
 {
 namespace refresh_mechanism
+{
+    template<typename F_T>
+    class animation_engine_refresh
+    {
+    public:
+        using function_type=std::function<F_T>;
+    private:
+        float m_internal_clock_rate{1};
+        std::thread m_refresh_thread;
+        void refresh_all();
+        std::vector<function_type> observers;
+    public:
+        animation_engine_refresh();
+        float set_refresh_internal_clock(float p_internal_clock_rate);
+        std::thread::id start_internal_refresh_clock();
+        ~animation_engine_refresh();
+        int register_function(const function_type p_function);
+    };
+}//refresh_mechanism
+
+namespace refresh_mechanism //Implementation
 {
     template<typename F_T>
     animation_engine_refresh<F_T>::animation_engine_refresh()
@@ -24,7 +45,10 @@ namespace refresh_mechanism
     template<typename F_T>
     void animation_engine_refresh<F_T>::refresh_all()
     {
-
+        for(auto& elem:observers)
+        {
+            elem();
+        }
     }
 
     /*
@@ -51,7 +75,7 @@ namespace refresh_mechanism
     }
 
     template<typename F_T>
-    int animation_engine_refresh<F_T>::register_function(const function_type& p_function)
+    int animation_engine_refresh<F_T>::register_function(const function_type p_function)
     {
         observers.push_back(p_function);
         return observers.size();

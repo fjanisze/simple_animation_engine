@@ -1,4 +1,5 @@
 #include "animation.hpp"
+#include "animation_refresh_mechanism.hpp"
 #include <gmock.h>
 
 class linear_interpolation_test_small : public ::testing::Test
@@ -232,6 +233,7 @@ namespace helper_objects
 
         MOCK_METHOD1(draw,animation_engine::anim_obj_status(sf::RenderWindow&));
         MOCK_METHOD0(prepare_to_render,anim_obj_status());
+        MOCK_METHOD0(refresh,anim_obj_status());
         MOCK_METHOD1(set_animation_speed,int(int));
 
         MOCK_METHOD1(draw_impl,void(sf::RenderWindow&));
@@ -459,6 +461,38 @@ TEST_F(animation_text_testsuit,basic_creation)
 }
 
 
+class refresh_mechanism_testsuit : public ::testing::Test
+{
+public:
+    using animated_object_mock=::testing::StrictMock<helper_objects::animated_object_mock>;
+    using animated_object_mock_ptr=std::shared_ptr<animated_object_mock>;
+    using ptr_type=anim_obj_status();
+
+    animated_object_mock_ptr anim_obj1,
+                             anim_obj2,
+                             anim_obj3;
+
+    refresh_mechanism::animation_engine_refresh<ptr_type> m_refresh;
+    refresh_mechanism_testsuit()
+    {
+        anim_obj1=std::make_shared<animated_object_mock>();
+        anim_obj2=std::make_shared<animated_object_mock>();
+        anim_obj3=std::make_shared<animated_object_mock>();
+    }
+};
+
+TEST_F(refresh_mechanism_testsuit, add_elements_and_perform_refresh)
+{
+    EXPECT_CALL(*anim_obj1,refresh());
+    EXPECT_CALL(*anim_obj2,refresh());
+    EXPECT_CALL(*anim_obj3,refresh());
+
+    ASSERT_EQ(1,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj1)));
+    ASSERT_EQ(2,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj2)));
+    ASSERT_EQ(3,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj3)));
+
+    m_refresh.start_internal_refresh_clock();
+}
 
 
 
