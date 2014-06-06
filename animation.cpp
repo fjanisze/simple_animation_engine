@@ -111,7 +111,7 @@ namespace animation_engine
         return m_status;
     }
 
-    anim_obj_status animated_object::draw(sf::RenderWindow& p_rnd)
+    anim_obj_status animated_object::refresh()
     {
         if(m_status==anim_obj_status::STATUS_NOT_READY||
            m_status==anim_obj_status::STATUS_FAULTY)
@@ -126,20 +126,26 @@ namespace animation_engine
             }
             else
             {
-                frame_tick_moving_obj_impl();
+                moving_object_draw_impl();
             }
         }
         else if(m_status==anim_obj_status::STATUS_STOPPED)
         {
             //Just use the current position and change nothing
         }
+        return m_status;
+    }
+
+    anim_obj_status animated_object::draw(sf::RenderWindow& p_rnd)
+    {
+
 #ifndef RUN_REGRESSION //Not very elegant, but works..
         draw_impl(p_rnd);
 #endif
         return m_status;
     }
 
-    sf::Vector2f animated_object::frame_tick_moving_obj_impl()
+    sf::Vector2f animated_object::moving_object_draw_impl()
     {
         if(animation_speed_info==animation_speed_type::IS_SLOWER)
         {

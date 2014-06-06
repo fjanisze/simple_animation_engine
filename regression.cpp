@@ -220,8 +220,8 @@ TEST_F(animated_object_basic_testsuit,set_same_begind_and_end_coord_speedslow)
     ASSERT_EQ(sf::Vector2f(0,0),animated_object->set_begin_position(sf::Vector2f(10,10)));
     ASSERT_EQ(anim_obj_status::STATUS_READY,animated_object->prepare_to_render());
     animated_object->set_animation_speed(2,60);//The values are not releavant, just need to have the object in IS_SLOWER state
-    //Since begin position==end position, the first draw should trigger the completion of the animation
-    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,animated_object->draw(render_window));
+    //Since begin position==end position, the first refresh should trigger the completion of the animation
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,animated_object->refresh());
 }
 
 namespace helper_objects
@@ -397,13 +397,19 @@ TEST_F(animated_object_testsuit,four_draw_and_complete)
 
     for(short trigger_three_times=3;trigger_three_times>0;--trigger_three_times)
     {
+        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->refresh());
         ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj1->draw(render_window));
+        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->refresh());
         ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj2->draw(render_window));
+        ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj3->refresh());
         ASSERT_EQ(anim_obj_status::STATUS_READY,anim_obj3->draw(render_window));
     }
 
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj1->refresh());
     ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj1->draw(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj2->refresh());
     ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj2->draw(render_window));
+    ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj3->refresh());
     ASSERT_EQ(anim_obj_status::STATUS_COMPLETED,anim_obj3->draw(render_window));
 }
 

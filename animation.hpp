@@ -5,6 +5,8 @@
 #include <list>
 #include <memory>
 #include <chrono>
+#include <thread>
+#include <atomic>
 
 #define RUN_REGRESSION
 
@@ -73,12 +75,13 @@ namespace animation_engine
         double current_time{0};
         double expected_time_to_draw{0};
 
-        sf::Vector2f frame_tick_moving_obj_impl();
+        sf::Vector2f moving_object_draw_impl();
         virtual void draw_impl(sf::RenderWindow& p_rnd)=0;
     public:
         animated_object();
         //virtual void next_frame_tick();
         virtual anim_obj_status draw(sf::RenderWindow& p_rnd);
+        virtual anim_obj_status refresh();
         virtual anim_obj_status prepare_to_render()=0;
 
         virtual sf::Vector2f get_position()=0;
@@ -209,6 +212,20 @@ namespace animation_engine
         bool check_if_all_completed();
         bool check_if_all_completed_or_stopped();
     };
+
+namespace refresh_mechanism
+{
+    class animation_engine_refresh
+    {
+        float m_internal_clock_rate{1};
+        std::thread m_refresh_thread;
+        void refresh_all();
+    public:
+        float set_refresh_internal_clock(float p_internal_clock_rate);
+        std::thread::id start_internal_refresh_clock();
+        ~animation_engine_refresh();
+    };
+}//refresh_mechanism
 }
 
 #endif
