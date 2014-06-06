@@ -481,17 +481,23 @@ public:
     }
 };
 
-TEST_F(refresh_mechanism_testsuit, add_elements_and_perform_refresh)
+TEST_F(refresh_mechanism_testsuit,add_elements_and_perform_refresh)
 {
-    EXPECT_CALL(*anim_obj1,refresh());
-    EXPECT_CALL(*anim_obj2,refresh());
-    EXPECT_CALL(*anim_obj3,refresh());
+    EXPECT_CALL(*anim_obj1,refresh()).Times(4);
+    EXPECT_CALL(*anim_obj2,refresh()).Times(4);
+    EXPECT_CALL(*anim_obj3,refresh()).Times(4);
+
+    ASSERT_EQ(1000,m_refresh.set_refresh_internal_clock(50));
 
     ASSERT_EQ(1,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj1)));
     ASSERT_EQ(2,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj2)));
     ASSERT_EQ(3,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj3)));
 
-    m_refresh.start_internal_refresh_clock();
+    ASSERT_TRUE(m_refresh.start_internal_refresh_cycle());
+    //Wait for 1000 ms, this should trigger the refresh 10 times for each anim_obj
+    std::this_thread::sleep_for(std::chrono::milliseconds{200});
+    //Stop the cycle
+    ASSERT_TRUE(m_refresh.stop_internal_refresh_cycle());
 }
 
 
