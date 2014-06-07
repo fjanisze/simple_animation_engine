@@ -481,26 +481,52 @@ public:
     }
 };
 
-TEST_F(refresh_mechanism_testsuit,add_elements_and_perform_refresh)
+TEST_F(refresh_mechanism_testsuit,add_elements_refresh_remove)
 {
     EXPECT_CALL(*anim_obj1,refresh()).Times(4);
     EXPECT_CALL(*anim_obj2,refresh()).Times(4);
     EXPECT_CALL(*anim_obj3,refresh()).Times(4);
 
-    ASSERT_EQ(1000,m_refresh.set_refresh_internal_clock(50));
+    ASSERT_EQ(1000,m_refresh.set_refresh_internal_clock(15));
 
     ASSERT_EQ(1,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj1)));
     ASSERT_EQ(2,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj2)));
     ASSERT_EQ(3,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj3)));
 
     ASSERT_TRUE(m_refresh.start_internal_refresh_cycle());
-    //Wait for 1000 ms, this should trigger the refresh 10 times for each anim_obj
-    std::this_thread::sleep_for(std::chrono::milliseconds{200});
+    //Wait for 50 ms, this should trigger the refresh 4 times for each anim_obj
+    std::this_thread::sleep_for(std::chrono::milliseconds{50});
+    //Stop the cycle
+    ASSERT_TRUE(m_refresh.stop_internal_refresh_cycle());
+    ASSERT_EQ(2,m_refresh.unregister_function(std::bind(&animated_object::refresh,anim_obj1)));
+    ASSERT_EQ(1,m_refresh.unregister_function(std::bind(&animated_object::refresh,anim_obj3)));
+}
+
+TEST_F(refresh_mechanism_testsuit,remove_elements_while_refreshing)
+{
+    using ::testing::AtLeast;
+    EXPECT_CALL(*anim_obj1,refresh()).Times(AtLeast(2));
+    EXPECT_CALL(*anim_obj2,refresh()).Times(AtLeast(4));
+    EXPECT_CALL(*anim_obj3,refresh()).Times(AtLeast(7));
+
+    ASSERT_EQ(1000,m_refresh.set_refresh_internal_clock(5));
+
+    ASSERT_EQ(1,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj1)));
+    ASSERT_EQ(2,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj2)));
+    ASSERT_EQ(3,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj3)));
+
+    ASSERT_TRUE(m_refresh.start_internal_refresh_cycle());
+    //The erase operation on the container and the loop in refresh_all may overlap
+    //If the data race is not properly handled
+    std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    ASSERT_NO_THROW(m_refresh.unregister_function(std::bind(&animated_object::refresh,anim_obj1)));
+    std::this_thread::sleep_for(std::chrono::milliseconds{20});
+    ASSERT_NO_THROW(m_refresh.unregister_function(std::bind(&animated_object::refresh,anim_obj2)));
+    std::this_thread::sleep_for(std::chrono::milliseconds{35});
+    ASSERT_NO_THROW(m_refresh.unregister_function(std::bind(&animated_object::refresh,anim_obj3)));
     //Stop the cycle
     ASSERT_TRUE(m_refresh.stop_internal_refresh_cycle());
 }
-
-
 
 
 
