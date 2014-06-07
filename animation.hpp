@@ -2,13 +2,14 @@
 #define ANIMATION_HPP
 
 #include <SFML/Graphics.hpp>
+#include "animation_refresh_mechanism.hpp"
 #include <list>
 #include <memory>
 #include <chrono>
 #include <thread>
 #include <atomic>
 
-#define RUN_REGRESSION
+//#define RUN_REGRESSION
 
 namespace animation_engine
 {
@@ -79,7 +80,7 @@ namespace animation_engine
         virtual void draw_impl(sf::RenderWindow& p_rnd)=0;
     public:
         animated_object();
-        //virtual void next_frame_tick();
+
         virtual anim_obj_status draw(sf::RenderWindow& p_rnd);
         virtual anim_obj_status refresh();
         virtual anim_obj_status prepare_to_render()=0;
@@ -90,8 +91,8 @@ namespace animation_engine
         virtual void repeat();
         virtual anim_obj_status stop();
 
-        virtual void set_animation_speed(float p_anim_duration,int p_frame_rate);
-        virtual float get_animation_execution_time(int p_frame_rate);
+        virtual void set_animation_speed(float p_anim_duration,int p_refresh_speed);
+        virtual float get_animation_execution_time(int p_refresh_speed);
 
         virtual ~animated_object()=0;
     };
@@ -197,6 +198,7 @@ namespace animation_engine
 
     class animation_engine
     {
+        refresh_mechanism::animation_engine_refresh<anim_obj_status()> m_refresh;
         std::list<anim_obj_container_entry> m_object_container;
         int m_frame_rate{0};
         sf::RenderWindow& m_rnd_wnd;
@@ -205,6 +207,7 @@ namespace animation_engine
         int amount_of_obj_in_stop_state{0};
     public:
         animation_engine(sf::RenderWindow& p_rnd_wnd, int p_frame_rate);
+        ~animation_engine();
         int register_object(anim_obj_ptr p_obj,
                             animated_obj_completion_opt p_action_when_completed=animated_obj_completion_opt::ACTION_DEFAULT);
         draw_return_status draw();

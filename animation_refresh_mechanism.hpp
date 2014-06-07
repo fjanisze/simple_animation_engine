@@ -2,6 +2,10 @@
 #include <functional>
 #include <atomic>
 #include <mutex>
+#include <thread>
+
+#ifndef ANIM_REFRESH_MECHANISM_HPP
+#define ANIM_REFRESH_MECHANISM_HPP
 
 namespace animation_engine
 {
@@ -163,3 +167,5 @@ namespace refresh_mechanism //Implementation
 
 }//refresh_mechanism
 }//animation_engine
+
+#endif//ANIM_REFRESH_MECHANISM_HPP

@@ -199,13 +199,13 @@ namespace animation_engine
         throw;
     }
 
-    void animated_object::set_animation_speed(float p_anim_duration,int p_frame_rate)
+    void animated_object::set_animation_speed(float p_anim_duration,int p_refresh_speed)
     {
         int amount_of_points=object_positions.size();
         if(amount_of_points>0)
         {
             //Time required to draw the current amount of points
-            float time_needed_in_sec=get_animation_execution_time(p_frame_rate);
+            float time_needed_in_sec=get_animation_execution_time(p_refresh_speed);
             if(p_anim_duration>time_needed_in_sec)
             {
                 animation_speed_info=animation_speed_type::IS_SLOWER;
@@ -222,14 +222,14 @@ namespace animation_engine
                 single_time_increment=time_needed_in_sec/amount_of_points;
             }
             expected_time_to_draw=single_time_increment;
-            single_frame_time_count=1.0/p_frame_rate;
+            single_frame_time_count=1.0/p_refresh_speed;
         }
 
     }
 
-    float animated_object::get_animation_execution_time(int p_frame_rate)
+    float animated_object::get_animation_execution_time(int p_refresh_speed)
     {
-        return (float)object_positions.size()/p_frame_rate;
+        return (float)object_positions.size()/p_refresh_speed;
     }
 
     animated_object::~animated_object(){}

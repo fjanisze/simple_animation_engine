@@ -14,7 +14,7 @@ int main(int argc,char** argv)
 
 #else
 
-//#define SPRITE
+#define SPRITE
 
 int main()
 {
@@ -76,7 +76,9 @@ int main()
                         object->set_end_position(sf::Vector2f(event.mouseButton.x,event.mouseButton.y));
                         object->prepare_to_render();
                         std::cout<<"Animation time: "<<object->get_animation_execution_time(60)<<std::endl;
-                        object->set_animation_speed(.5,60);
+                        static int multiplier = 1;
+                        object->set_animation_speed(.5*multiplier,60);
+                        multiplier*=2;
                         engine.register_object(object,animation_engine::animated_obj_completion_opt::ACTION_REPEAT_ANIMATION);
                         //Create a new one
 #ifdef SPRITE
