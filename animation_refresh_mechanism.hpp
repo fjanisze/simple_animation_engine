@@ -18,12 +18,17 @@ namespace refresh_mechanism
         void refresh_all();
         std::mutex m_observers_mtx;
         std::vector<function_type> m_observers;
-        bool m_continue_the_cycle;
+        bool m_continue_the_cycle,
+             m_cycle_pause;
     public:
         animation_engine_refresh();
         int set_refresh_internal_clock(int p_internal_clock_rate);
+
         bool start_internal_refresh_cycle();
         bool stop_internal_refresh_cycle();
+        bool pause_internal_refresh_cycle();
+        void unpause_internal_refresh_cycle();
+
         ~animation_engine_refresh();
         int register_function(const function_type& p_function);
         int unregister_function(const function_type& p_function);
@@ -34,7 +39,8 @@ namespace refresh_mechanism //Implementation
 {
     template<typename F_T>
     animation_engine_refresh<F_T>::animation_engine_refresh():
-        m_continue_the_cycle{false}
+        m_continue_the_cycle{false},
+        m_cycle_pause{false}
     {
     }
 
@@ -55,7 +61,7 @@ namespace refresh_mechanism //Implementation
     try{
         while(m_continue_the_cycle)
         {
-            if(m_observers_mtx.try_lock())
+            if(!m_cycle_pause&&m_observers_mtx.try_lock())
             {
                 for(auto& elem:m_observers)
                 {
@@ -106,7 +112,24 @@ namespace refresh_mechanism //Implementation
         {
             m_refresh_thread.join();
         }
+        m_cycle_pause=false;
         return true;
+    }
+
+    template<typename F_T>
+    bool animation_engine_refresh<F_T>::pause_internal_refresh_cycle()
+    {
+        if(m_continue_the_cycle)
+        {
+            m_cycle_pause=true;
+        }
+        return m_cycle_pause;
+    }
+
+    template<typename F_T>
+    void animation_engine_refresh<F_T>::unpause_internal_refresh_cycle()
+    {
+        m_cycle_pause=false;
     }
 
     template<typename F_T>

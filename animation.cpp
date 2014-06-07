@@ -140,7 +140,10 @@ namespace animation_engine
     {
 
 #ifndef RUN_REGRESSION //Not very elegant, but works..
-        draw_impl(p_rnd);
+        if(m_status==anim_obj_status::STATUS_READY)
+        {
+            draw_impl(p_rnd);
+        }
 #endif
         return m_status;
     }
