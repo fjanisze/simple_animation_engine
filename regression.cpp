@@ -267,7 +267,7 @@ using ::testing::_;
 using ::testing::DefaultValue;
 using ::testing::Return;
 
-struct animation_engine_testsuit : public ::testing::Test
+struct animation_engine_testsuit_common : public ::testing::Test
 {
     typedef ::testing::StrictMock<helper_objects::animated_object_mock> anim_obj_strict_mock;
     typedef std::shared_ptr<anim_obj_strict_mock> anim_obj_mock_ptr;
@@ -278,6 +278,19 @@ struct animation_engine_testsuit : public ::testing::Test
     std::unique_ptr<animation_engine::animation_engine> engine;
     helper_objects::animation_engine_refresh_mock* raw_pointer_refresh_system;
 
+    auto get_refresh_system_ptr()
+    {
+        return std::unique_ptr<refresh_mechanism::I_animation_engine_refresh<anim_obj_status()>>(raw_pointer_refresh_system);
+    }
+
+    animation_engine_testsuit_common()
+    {
+        raw_pointer_refresh_system = new helper_objects::animation_engine_refresh_mock();
+    }
+};
+
+struct animation_engine_testsuit : public animation_engine_testsuit_common
+{
     void set_common_expectation()
     {
         EXPECT_CALL(*anim_obj1,draw(_)).Times(1);
@@ -289,17 +302,14 @@ struct animation_engine_testsuit : public ::testing::Test
         EXPECT_CALL(*raw_pointer_refresh_system,stop_internal_refresh_cycle()).Times(1);
     }
 
-    animation_engine_testsuit()
+    void full_construction_and_expectation()
     {
-        raw_pointer_refresh_system = new helper_objects::animation_engine_refresh_mock();
-
         //Set the expectation for the animation engine constructor
         EXPECT_CALL(*raw_pointer_refresh_system,set_refresh_internal_clock_rate(_)).Times(1);
         EXPECT_CALL(*raw_pointer_refresh_system,start_internal_refresh_cycle()).Times(1);
         ON_CALL(*raw_pointer_refresh_system,start_internal_refresh_cycle()).WillByDefault(Return(true));
         //Create the animation engine
-        engine=std::unique_ptr<animation_engine::animation_engine>(new animation_engine::animation_engine(render_window,40,
-                                                 std::unique_ptr<refresh_mechanism::I_animation_engine_refresh<anim_obj_status()>>(raw_pointer_refresh_system)));
+        engine=std::unique_ptr<animation_engine::animation_engine>(new animation_engine::animation_engine(render_window,40,get_refresh_system_ptr()));
 
         anim_obj1=std::shared_ptr<anim_obj_strict_mock>(new anim_obj_strict_mock);
         anim_obj2=std::shared_ptr<anim_obj_strict_mock>(new anim_obj_strict_mock);
@@ -312,10 +322,17 @@ struct animation_engine_testsuit : public ::testing::Test
 
         set_common_expectation();
     }
+
+    animation_engine_testsuit()
+    {
+
+    }
 };
 
 TEST_F(animation_engine_testsuit,create_2anim_obj_and_draw)
 {
+    full_construction_and_expectation();
+
     ASSERT_EQ(1,engine->register_object(anim_obj1));
     ASSERT_EQ(2,engine->register_object(anim_obj2));
     ASSERT_EQ(3,engine->register_object(anim_obj2));
@@ -326,6 +343,8 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_draw)
 
 TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_repeat_action)
 {
+    full_construction_and_expectation();
+
     //draw need to return STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
     DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
 
@@ -342,7 +361,7 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_repeat_action)
 
 TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_delete_action)
 {
- //   animation_engine::animation_engine engine(render_window,40);
+    full_construction_and_expectation();
 
     //draw need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
     DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
@@ -358,6 +377,8 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_delete_action)
 
 TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_if_stop_work)
 {
+    full_construction_and_expectation();
+
     //draw need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
     DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
 
@@ -371,6 +392,18 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_if_stop_work)
     ASSERT_EQ(draw_return_status::STATUS_OK,engine->draw());
     ASSERT_FALSE(engine->check_if_all_completed());
     ASSERT_FALSE(engine->check_if_all_completed_or_stopped());
+}
+
+TEST_F(animation_engine_testsuit, check_animation_engine_constructor)
+{
+    int frame_rate = 30;
+    int refresh_rate = frame_rate * 10;
+    EXPECT_CALL(*raw_pointer_refresh_system,set_refresh_internal_clock_rate(refresh_rate)).Times(1);
+    EXPECT_CALL(*raw_pointer_refresh_system,start_internal_refresh_cycle()).Times(1);
+    ON_CALL(*raw_pointer_refresh_system,start_internal_refresh_cycle()).WillByDefault(Return(true));
+
+    //Create the animation engine
+    animation_engine::animation_engine anim_engine(render_window,frame_rate,get_refresh_system_ptr());
 }
 
 struct animated_object_testsuit : public ::testing::Test
@@ -539,7 +572,7 @@ TEST_F(refresh_mechanism_testsuit,remove_elements_while_refreshing)
     EXPECT_CALL(*anim_obj2,refresh()).Times(4);
     EXPECT_CALL(*anim_obj3,refresh()).Times(7);
 
-    ASSERT_EQ(1000,m_refresh.set_refresh_internal_clock_rate(105));
+    ASSERT_EQ(1000,m_refresh.set_refresh_internal_clock_rate(104));
 
     ASSERT_EQ(1,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj1)));
     ASSERT_EQ(2,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj2)));

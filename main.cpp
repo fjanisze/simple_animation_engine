@@ -77,7 +77,7 @@ int main()
                         object->prepare_to_render();
                         std::cout<<"Animation time: "<<object->get_animation_execution_time(30)<<std::endl;
                         static int multiplier = 1;
-                        object->set_animation_duration(.5*multiplier);
+                        object->set_animation_duration((float)1/multiplier);
                         multiplier*=2;
                         engine.register_object(object,animation_engine::animated_obj_completion_opt::ACTION_REPEAT_ANIMATION);
                         //Create a new one
