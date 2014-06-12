@@ -64,17 +64,12 @@ namespace animation_engine
 
         std::shared_ptr<I_interpolation_algorithm> functions;
 
-        enum animation_speed_type
-        {
-            IS_NORMAL=0,
-            IS_SLOWER,
-            IS_FASTER
-        }animation_speed_info;
-
-        double single_frame_time_count{0};
-        double single_time_increment{0};
-        double current_time{0};
-        double expected_time_to_draw{0};
+        float m_animation_duration{0};
+        double m_single_time_increment{0};
+        double m_current_time{0};
+        double m_new_position_threshold{0};
+        int m_refresh_frequency{0};
+        void calculate_drawing_data();
 
         sf::Vector2f moving_object_draw_impl();
         virtual void draw_impl(sf::RenderWindow& p_rnd)=0;
@@ -83,6 +78,7 @@ namespace animation_engine
 
         virtual anim_obj_status draw(sf::RenderWindow& p_rnd);
         virtual anim_obj_status refresh();
+        virtual bool set_refresh_frequency(int p_frequency);
         virtual anim_obj_status prepare_to_render()=0;
 
         virtual sf::Vector2f get_position()=0;
@@ -91,7 +87,7 @@ namespace animation_engine
         virtual void repeat();
         virtual anim_obj_status stop();
 
-        virtual void set_animation_speed(float p_anim_duration,int p_refresh_speed);
+        virtual bool set_animation_duration(float p_anim_duration);
         virtual float get_animation_execution_time(int p_refresh_speed);
 
         virtual ~animated_object()=0;

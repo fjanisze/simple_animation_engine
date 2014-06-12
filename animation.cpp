@@ -89,7 +89,6 @@ namespace animation_engine
     animated_object::animated_object()
     {
         m_status=anim_obj_status::STATUS_NOT_READY;
-        animation_speed_info=animation_speed_type::IS_NORMAL;
     }
 
     void animated_object::repeat()
@@ -138,7 +137,6 @@ namespace animation_engine
 
     anim_obj_status animated_object::draw(sf::RenderWindow& p_rnd)
     {
-
 #ifndef RUN_REGRESSION //Not very elegant, but works..
         if(m_status==anim_obj_status::STATUS_READY)
         {
@@ -150,28 +148,10 @@ namespace animation_engine
 
     sf::Vector2f animated_object::moving_object_draw_impl()
     {
-        if(animation_speed_info==animation_speed_type::IS_SLOWER)
+        m_current_time+=m_single_time_increment;
+        if(m_current_time>=m_new_position_threshold)
         {
-            if(current_time>=expected_time_to_draw)//Reset the counter and do not change the position (skip the frame)
-            {
-                expected_time_to_draw+=single_time_increment;
-                m_cur_position=get_current_position();
-            }
-            current_time+=single_frame_time_count;
-        }
-        else if(animation_speed_info==animation_speed_type::IS_FASTER)
-        {
-            while(current_time<expected_time_to_draw)
-            {
-                current_time+=single_time_increment;
-                ++m_current_position;
-            }
-            expected_time_to_draw+=single_frame_time_count;
-            --m_current_position;
-            m_cur_position=get_current_position();
-        }
-        else //IS_NORMAL
-        {
+            m_current_time=0;
             m_cur_position=get_current_position();
         }
         return m_cur_position;
@@ -199,37 +179,36 @@ namespace animation_engine
         throw;
     }
 
-    void animated_object::set_animation_speed(float p_anim_duration,int p_refresh_speed)
+    bool animated_object::set_animation_duration(float p_anim_duration)
     {
-        int amount_of_points=object_positions.size();
-        if(amount_of_points>0)
-        {
-            //Time required to draw the current amount of points
-            float time_needed_in_sec=get_animation_execution_time(p_refresh_speed);
-            if(p_anim_duration>time_needed_in_sec)
-            {
-                animation_speed_info=animation_speed_type::IS_SLOWER;
-                single_time_increment=1/(amount_of_points/p_anim_duration);
-            }
-            else if(p_anim_duration<time_needed_in_sec)
-            {
-                animation_speed_info=animation_speed_type::IS_FASTER;
-                single_time_increment=p_anim_duration/amount_of_points;
-            }
-            else
-            {
-                animation_speed_info=animation_speed_type::IS_NORMAL;
-                single_time_increment=time_needed_in_sec/amount_of_points;
-            }
-            expected_time_to_draw=single_time_increment;
-            single_frame_time_count=1.0/p_refresh_speed;
-        }
-
+        if(p_anim_duration<=0)
+            return false;
+        m_animation_duration=p_anim_duration;
+        return true;
     }
 
     float animated_object::get_animation_execution_time(int p_refresh_speed)
     {
         return (float)object_positions.size()/p_refresh_speed;
+    }
+
+    bool animated_object::set_refresh_frequency(int p_frequency)
+    {
+        if(m_animation_duration==0||p_frequency<=0)
+        {
+            return false;
+        }
+        m_refresh_frequency=p_frequency;
+        calculate_drawing_data();
+        return true;
+    }
+
+    void animated_object::calculate_drawing_data()
+    {
+        m_current_time=0;
+        m_single_time_increment=(double)1/m_refresh_frequency;
+        double num_of_cycle_required=(double)(double)object_positions.size()/m_animation_duration;
+        m_new_position_threshold=(double)1/num_of_cycle_required;
     }
 
     animated_object::~animated_object(){}

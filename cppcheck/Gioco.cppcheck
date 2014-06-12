@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="1">
+    <includedir>
+        <dir name="F:/GOOGLE DISK/My Code/simple animation engine/"/>
+    </includedir>
+    <paths>
+        <dir name="F:/GOOGLE DISK/My Code/simple animation engine/cppcheck"/>
+        <dir name="F:/GOOGLE DISK/My Code/simple animation engine"/>
+    </paths>
+    <exclude>
+        <path name="F:/GOOGLE DISK/My Code/simple animation engine/cppcheck/"/>
+        <path name="F:/GOOGLE DISK/My Code/simple animation engine/.git/"/>
+        <path name="F:/GOOGLE DISK/My Code/simple animation engine/bin/"/>
+        <path name="F:/GOOGLE DISK/My Code/simple animation engine/obj/"/>
+    </exclude>
+</project>

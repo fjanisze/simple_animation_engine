@@ -19,6 +19,7 @@ namespace refresh_mechanism
         }
         float old_clock_rate=m_internal_clock_rate;
         m_internal_clock_rate=p_internal_clock_rate;
+	return old_clock_rate;
     }
 
     template<typename F_T>

@@ -45,7 +45,7 @@ int main()
     animation_engine::anim_text_ptr object=animation_engine::animated_text::create(text);
     object->set_font(std::make_shared<sf::Font>(font));
 #endif
-    animation_engine::animation_engine engine(app,60);
+    animation_engine::animation_engine engine(app,30);
 
     bool begin_point_ready=false;
 
@@ -75,9 +75,9 @@ int main()
                     {
                         object->set_end_position(sf::Vector2f(event.mouseButton.x,event.mouseButton.y));
                         object->prepare_to_render();
-                        std::cout<<"Animation time: "<<object->get_animation_execution_time(60)<<std::endl;
+                        std::cout<<"Animation time: "<<object->get_animation_execution_time(30)<<std::endl;
                         static int multiplier = 1;
-                        object->set_animation_speed(.5*multiplier,60);
+                        object->set_animation_duration(.5*multiplier);
                         multiplier*=2;
                         engine.register_object(object,animation_engine::animated_obj_completion_opt::ACTION_REPEAT_ANIMATION);
                         //Create a new one

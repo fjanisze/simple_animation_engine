@@ -3,6 +3,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <cmath>
 
 #ifndef ANIM_REFRESH_MECHANISM_HPP
 #define ANIM_REFRESH_MECHANISM_HPP
@@ -11,8 +12,32 @@ namespace animation_engine
 {
 namespace refresh_mechanism
 {
+    //Interface for the refresh mechanism
     template<typename F_T>
-    class animation_engine_refresh
+    class I_animation_engine_refresh
+    {
+    public:
+        using function_type=std::function<F_T>;
+    public:
+        virtual int set_refresh_internal_clock_rate(int p_internal_clock_rate) = 0;
+        virtual int get_refresh_internal_clock_rate() = 0;
+
+        virtual bool start_internal_refresh_cycle() = 0;
+        virtual bool stop_internal_refresh_cycle() = 0;
+        virtual bool pause_internal_refresh_cycle() = 0;
+        virtual void unpause_internal_refresh_cycle() = 0;
+
+        virtual ~I_animation_engine_refresh() = 0;
+        virtual int register_function(const function_type& p_function) = 0;
+        virtual int unregister_function(const function_type& p_function) = 0;
+    };
+
+    template<typename T_F>
+    I_animation_engine_refresh<T_F>::~I_animation_engine_refresh(){}
+
+    //Implementation of the refresh mechanism
+    template<typename F_T>
+    class animation_engine_refresh : public I_animation_engine_refresh<F_T>
     {
     public:
         using function_type=std::function<F_T>;
@@ -26,7 +51,8 @@ namespace refresh_mechanism
              m_cycle_pause;
     public:
         animation_engine_refresh();
-        int set_refresh_internal_clock(int p_internal_clock_rate);
+        int set_refresh_internal_clock_rate(int p_internal_clock_rate);
+        int get_refresh_internal_clock_rate();
 
         bool start_internal_refresh_cycle();
         bool stop_internal_refresh_cycle();
@@ -49,7 +75,7 @@ namespace refresh_mechanism //Implementation
     }
 
     template<typename F_T>
-    int animation_engine_refresh<F_T>::set_refresh_internal_clock(int p_internal_clock_rate)
+    int animation_engine_refresh<F_T>::set_refresh_internal_clock_rate(int p_internal_clock_rate)
     {
         if(p_internal_clock_rate<=0)
         {
@@ -60,9 +86,17 @@ namespace refresh_mechanism //Implementation
         return old_clock_rate;
     }
 
+
+    template<typename F_T> inline
+    int animation_engine_refresh<F_T>::get_refresh_internal_clock_rate()
+    {
+        return m_internal_clock_rate;
+    }
+
     template<typename F_T>
     void animation_engine_refresh<F_T>::refresh_all()
     try{
+        int wait_time_in_us = std::floor(((double)1/m_internal_clock_rate)*1000000);
         while(m_continue_the_cycle)
         {
             if(!m_cycle_pause&&m_observers_mtx.try_lock())
@@ -73,7 +107,7 @@ namespace refresh_mechanism //Implementation
                 }
                 m_observers_mtx.unlock();
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds{m_internal_clock_rate});
+            std::this_thread::sleep_for(std::chrono::microseconds{wait_time_in_us});
         }
     }catch(std::exception& xa)
     {
