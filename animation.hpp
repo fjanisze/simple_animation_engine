@@ -9,7 +9,7 @@
 #include <thread>
 #include <atomic>
 
-//#define RUN_REGRESSION
+#define RUN_REGRESSION
 
 namespace animation_engine
 {
@@ -197,6 +197,7 @@ namespace animation_engine
     {
         using refresh_callback_ptr = anim_obj_status();
         using refresh_sys_ptr = std::unique_ptr<refresh_mechanism::I_animation_engine_refresh<refresh_callback_ptr>>;
+
         static refresh_sys_ptr get_default_refresh_sys()
         {
             return std::unique_ptr<refresh_mechanism::animation_engine_refresh<refresh_callback_ptr>>

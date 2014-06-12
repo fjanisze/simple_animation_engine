@@ -275,18 +275,35 @@ struct animation_engine_testsuit : public ::testing::Test
     sf::RenderWindow render_window;
     anim_obj_mock_ptr anim_obj1,
                      anim_obj2;
+    std::unique_ptr<animation_engine::animation_engine> engine;
+    helper_objects::animation_engine_refresh_mock* raw_pointer_refresh_system;
+
     void set_common_expectation()
     {
         EXPECT_CALL(*anim_obj1,draw(_)).Times(1);
         EXPECT_CALL(*anim_obj2,draw(_)).Times(2);
         EXPECT_CALL(*anim_obj1,set_refresh_frequency(_)).Times(1);
         EXPECT_CALL(*anim_obj2,set_refresh_frequency(_)).Times(2);
+        EXPECT_CALL(*raw_pointer_refresh_system,register_function(_)).Times(3);
+        EXPECT_CALL(*raw_pointer_refresh_system,get_refresh_internal_clock_rate()).Times(3);
+        EXPECT_CALL(*raw_pointer_refresh_system,stop_internal_refresh_cycle()).Times(1);
     }
 
     animation_engine_testsuit()
     {
+        raw_pointer_refresh_system = new helper_objects::animation_engine_refresh_mock();
+
+        //Set the expectation for the animation engine constructor
+        EXPECT_CALL(*raw_pointer_refresh_system,set_refresh_internal_clock_rate(_)).Times(1);
+        EXPECT_CALL(*raw_pointer_refresh_system,start_internal_refresh_cycle()).Times(1);
+        ON_CALL(*raw_pointer_refresh_system,start_internal_refresh_cycle()).WillByDefault(Return(true));
+        //Create the animation engine
+        engine=std::unique_ptr<animation_engine::animation_engine>(new animation_engine::animation_engine(render_window,40,
+                                                 std::unique_ptr<refresh_mechanism::I_animation_engine_refresh<anim_obj_status()>>(raw_pointer_refresh_system)));
+
         anim_obj1=std::shared_ptr<anim_obj_strict_mock>(new anim_obj_strict_mock);
         anim_obj2=std::shared_ptr<anim_obj_strict_mock>(new anim_obj_strict_mock);
+
         //Default return value for draw
         DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_READY);
         ON_CALL(*anim_obj1, set_refresh_frequency(_)).WillByDefault(Return(true));
@@ -299,67 +316,61 @@ struct animation_engine_testsuit : public ::testing::Test
 
 TEST_F(animation_engine_testsuit,create_2anim_obj_and_draw)
 {
-    animation_engine::animation_engine engine(render_window,40);
+    ASSERT_EQ(1,engine->register_object(anim_obj1));
+    ASSERT_EQ(2,engine->register_object(anim_obj2));
+    ASSERT_EQ(3,engine->register_object(anim_obj2));
 
-    ASSERT_EQ(1,engine.register_object(anim_obj1));
-    ASSERT_EQ(2,engine.register_object(anim_obj2));
-    ASSERT_EQ(3,engine.register_object(anim_obj2));
-
-    ASSERT_EQ(draw_return_status::STATUS_OK,engine.draw());
-    ASSERT_FALSE(engine.check_if_all_completed());
+    ASSERT_EQ(draw_return_status::STATUS_OK,engine->draw());
+    ASSERT_FALSE(engine->check_if_all_completed());
 }
 
 TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_repeat_action)
 {
-    animation_engine::animation_engine engine(render_window,40);
-
     //draw need to return STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
     DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
 
     EXPECT_CALL(*anim_obj1,repeat()).Times(1);
     EXPECT_CALL(*anim_obj2,repeat()).Times(2);
 
-    ASSERT_EQ(1,engine.register_object(anim_obj1,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
-    ASSERT_EQ(2,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
-    ASSERT_EQ(3,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
+    ASSERT_EQ(1,engine->register_object(anim_obj1,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
+    ASSERT_EQ(2,engine->register_object(anim_obj2,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
+    ASSERT_EQ(3,engine->register_object(anim_obj2,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
 
-    ASSERT_EQ(draw_return_status::STATUS_OK,engine.draw());
-    ASSERT_FALSE(engine.check_if_all_completed());
+    ASSERT_EQ(draw_return_status::STATUS_OK,engine->draw());
+    ASSERT_FALSE(engine->check_if_all_completed());
 }
 
 TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_delete_action)
 {
-    animation_engine::animation_engine engine(render_window,40);
+ //   animation_engine::animation_engine engine(render_window,40);
 
     //draw need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
     DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
 
-    ASSERT_EQ(1,engine.register_object(anim_obj1,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
-    ASSERT_EQ(2,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
-    ASSERT_EQ(3,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
+    ASSERT_EQ(1,engine->register_object(anim_obj1,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
+    ASSERT_EQ(2,engine->register_object(anim_obj2,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
+    ASSERT_EQ(3,engine->register_object(anim_obj2,animated_obj_completion_opt::ACTION_REMOVE_ANIMATED_OBJECT));
 
-    ASSERT_EQ(draw_return_status::STATUS_CLEANUP_NEEDED,engine.draw());
-    ASSERT_TRUE(engine.check_if_all_completed());
-    ASSERT_EQ(0,engine.clean_up()); //Nothing should be left in the container
+    ASSERT_EQ(draw_return_status::STATUS_CLEANUP_NEEDED,engine->draw());
+    ASSERT_TRUE(engine->check_if_all_completed());
+    ASSERT_EQ(0,engine->clean_up()); //Nothing should be left in the container
 }
 
 TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_if_stop_work)
 {
-    animation_engine::animation_engine engine(render_window,40);
-
     //draw need to retrn STATUS_COMPLETED in order to trigger perf_action_on_completed_animation
     DefaultValue<animation_engine::anim_obj_status>::Set(animation_engine::anim_obj_status::STATUS_COMPLETED);
 
     EXPECT_CALL(*anim_obj1,repeat()).Times(1);
     EXPECT_CALL(*anim_obj2,stop()).Times(2);
 
-    ASSERT_EQ(1,engine.register_object(anim_obj1,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
-    ASSERT_EQ(2,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_DONT_MOVE));
-    ASSERT_EQ(3,engine.register_object(anim_obj2,animated_obj_completion_opt::ACTION_DONT_MOVE));
+    ASSERT_EQ(1,engine->register_object(anim_obj1,animated_obj_completion_opt::ACTION_REPEAT_ANIMATION));
+    ASSERT_EQ(2,engine->register_object(anim_obj2,animated_obj_completion_opt::ACTION_DONT_MOVE));
+    ASSERT_EQ(3,engine->register_object(anim_obj2,animated_obj_completion_opt::ACTION_DONT_MOVE));
 
-    ASSERT_EQ(draw_return_status::STATUS_OK,engine.draw());
-    ASSERT_FALSE(engine.check_if_all_completed());
-    ASSERT_FALSE(engine.check_if_all_completed_or_stopped());
+    ASSERT_EQ(draw_return_status::STATUS_OK,engine->draw());
+    ASSERT_FALSE(engine->check_if_all_completed());
+    ASSERT_FALSE(engine->check_if_all_completed_or_stopped());
 }
 
 struct animated_object_testsuit : public ::testing::Test
@@ -506,7 +517,7 @@ TEST_F(refresh_mechanism_testsuit,add_elements_refresh_remove)
     EXPECT_CALL(*anim_obj2,refresh()).Times(4);
     EXPECT_CALL(*anim_obj3,refresh()).Times(4);
 
-    ASSERT_EQ(1000,m_refresh.set_refresh_internal_clock_rate(15));
+    ASSERT_EQ(1000,m_refresh.set_refresh_internal_clock_rate(60));
 
     ASSERT_EQ(1,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj1)));
     ASSERT_EQ(2,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj2)));
@@ -524,11 +535,11 @@ TEST_F(refresh_mechanism_testsuit,add_elements_refresh_remove)
 TEST_F(refresh_mechanism_testsuit,remove_elements_while_refreshing)
 {
     using ::testing::AtLeast;
-    EXPECT_CALL(*anim_obj1,refresh()).Times(AtLeast(2));
-    EXPECT_CALL(*anim_obj2,refresh()).Times(AtLeast(4));
-    EXPECT_CALL(*anim_obj3,refresh()).Times(AtLeast(7));
+    EXPECT_CALL(*anim_obj1,refresh()).Times(2);
+    EXPECT_CALL(*anim_obj2,refresh()).Times(4);
+    EXPECT_CALL(*anim_obj3,refresh()).Times(7);
 
-    ASSERT_EQ(1000,m_refresh.set_refresh_internal_clock_rate(5));
+    ASSERT_EQ(1000,m_refresh.set_refresh_internal_clock_rate(105));
 
     ASSERT_EQ(1,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj1)));
     ASSERT_EQ(2,m_refresh.register_function(std::bind(&animated_object::refresh,anim_obj2)));
@@ -541,7 +552,7 @@ TEST_F(refresh_mechanism_testsuit,remove_elements_while_refreshing)
     ASSERT_NO_THROW(m_refresh.unregister_function(std::bind(&animated_object::refresh,anim_obj1)));
     std::this_thread::sleep_for(std::chrono::milliseconds{20});
     ASSERT_NO_THROW(m_refresh.unregister_function(std::bind(&animated_object::refresh,anim_obj2)));
-    std::this_thread::sleep_for(std::chrono::milliseconds{35});
+    std::this_thread::sleep_for(std::chrono::milliseconds{30});
     ASSERT_NO_THROW(m_refresh.unregister_function(std::bind(&animated_object::refresh,anim_obj3)));
     //Stop the cycle
     ASSERT_TRUE(m_refresh.stop_internal_refresh_cycle());
