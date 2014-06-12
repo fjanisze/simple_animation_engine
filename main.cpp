@@ -19,7 +19,7 @@ int main(int argc,char** argv)
 int main()
 {
     sf::RenderWindow app;
-    app.create(sf::VideoMode(800, 600), "animation");
+    app.create(sf::VideoMode(1024, 768), "animation");
     app.setFramerateLimit(60);
 
     sf::Texture texture;

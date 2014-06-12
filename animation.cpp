@@ -140,6 +140,7 @@ namespace animation_engine
 #ifndef RUN_REGRESSION //Not very elegant, but works..
         if(m_status==anim_obj_status::STATUS_READY)
         {
+            std::cout<<"Draw impl call\n";
             draw_impl(p_rnd);
         }
 #endif
@@ -205,10 +206,11 @@ namespace animation_engine
 
     void animated_object::calculate_drawing_data()
     {
+        int num=object_positions.size();
         m_current_time=0;
         m_single_time_increment=(double)1/m_refresh_frequency;
-        double num_of_cycle_required=(double)(double)object_positions.size()/m_animation_duration;
-        m_new_position_threshold=(double)1/num_of_cycle_required;
+        m_new_position_threshold=(double)(m_animation_duration)/object_positions.size();
+        std::cout<<"Increment: "<<m_single_time_increment<<", Threshold: "<<m_new_position_threshold<<std::endl;
     }
 
     animated_object::~animated_object(){}

@@ -397,7 +397,7 @@ TEST_F(animation_engine_testsuit,create_2anim_obj_and_check_if_stop_work)
 TEST_F(animation_engine_testsuit, check_animation_engine_constructor)
 {
     int frame_rate = 30;
-    int refresh_rate = frame_rate * 10;
+    int refresh_rate = frame_rate * 50;
     EXPECT_CALL(*raw_pointer_refresh_system,set_refresh_internal_clock_rate(refresh_rate)).Times(1);
     EXPECT_CALL(*raw_pointer_refresh_system,start_internal_refresh_cycle()).Times(1);
     ON_CALL(*raw_pointer_refresh_system,start_internal_refresh_cycle()).WillByDefault(Return(true));
