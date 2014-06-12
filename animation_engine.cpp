@@ -11,16 +11,18 @@ namespace animation_engine
     //
     ///////////////////////////////////////////////////////////////////
 
-    animation_engine::animation_engine(sf::RenderWindow& p_rnd_wnd,int p_frame_rate):
-        m_frame_rate(p_frame_rate),m_rnd_wnd(p_rnd_wnd)
+    animation_engine::animation_engine(sf::RenderWindow& p_rnd_wnd,int p_frame_rate,
+                                       refresh_sys_ptr p_refresh_mechanism):
+        m_frame_rate(p_frame_rate),m_rnd_wnd(p_rnd_wnd),
+        m_refresh(std::move(p_refresh_mechanism))
     {
         if(p_frame_rate<=0)
         {
             throw std::runtime_error("p_frame_rate<=0");
         }
         int refresh_rate_speed=p_frame_rate*10;//10 times faster than the frame rate
-        m_refresh.set_refresh_internal_clock_rate(refresh_rate_speed);
-        if(!m_refresh.start_internal_refresh_cycle())
+        m_refresh->set_refresh_internal_clock_rate(refresh_rate_speed);
+        if(!m_refresh->start_internal_refresh_cycle())
         {
             throw std::runtime_error("Unable to start the internal refresh cycle");
         }
@@ -28,7 +30,7 @@ namespace animation_engine
 
     animation_engine::~animation_engine()
     {
-        m_refresh.stop_internal_refresh_cycle();
+        m_refresh->stop_internal_refresh_cycle();
     }
 
     int animation_engine::register_object(anim_obj_ptr p_obj,animated_obj_completion_opt p_action_when_completed)
@@ -36,13 +38,13 @@ namespace animation_engine
         anim_obj_container_entry new_entry;
         new_entry.m_anim_object=p_obj;
         new_entry.m_action_when_completed=p_action_when_completed;
-        if(!new_entry.m_anim_object->set_refresh_frequency(m_refresh.get_refresh_internal_clock_rate()))
+        if(!new_entry.m_anim_object->set_refresh_frequency(m_refresh->get_refresh_internal_clock_rate()))
         {
             //Most probably the duration of the animation was not provided
             return -1;
         }
         m_object_container.push_back(new_entry);
-        m_refresh.register_function(std::bind(&animated_object::refresh,new_entry.m_anim_object));
+        m_refresh->register_function(std::bind(&animated_object::refresh,new_entry.m_anim_object));
         return m_object_container.size();
     }
 

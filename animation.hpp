@@ -192,9 +192,17 @@ namespace animation_engine
         bool m_to_be_removed{false};
     };
 
+
     class animation_engine
     {
-        refresh_mechanism::animation_engine_refresh<anim_obj_status()> m_refresh;
+        using refresh_callback_ptr = anim_obj_status();
+        using refresh_sys_ptr = std::unique_ptr<refresh_mechanism::I_animation_engine_refresh<refresh_callback_ptr>>;
+        static refresh_sys_ptr get_default_refresh_sys()
+        {
+            return std::unique_ptr<refresh_mechanism::animation_engine_refresh<refresh_callback_ptr>>
+                                    (new refresh_mechanism::animation_engine_refresh<refresh_callback_ptr>());
+        }
+        refresh_sys_ptr m_refresh;
         std::list<anim_obj_container_entry> m_object_container;
         int m_frame_rate{0};
         sf::RenderWindow& m_rnd_wnd;
@@ -202,7 +210,8 @@ namespace animation_engine
         int amount_of_obj_in_complete_state{0};
         int amount_of_obj_in_stop_state{0};
     public:
-        animation_engine(sf::RenderWindow& p_rnd_wnd, int p_frame_rate);
+        animation_engine(sf::RenderWindow& p_rnd_wnd, int p_frame_rate,
+                         refresh_sys_ptr p_refresh_mechanism = get_default_refresh_sys());
         ~animation_engine();
         int register_object(anim_obj_ptr p_obj,
                             animated_obj_completion_opt p_action_when_completed=animated_obj_completion_opt::ACTION_DEFAULT);
