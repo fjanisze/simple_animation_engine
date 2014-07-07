@@ -1,7 +1,7 @@
 #include "animation.hpp"
 
 #include <chrono>
-#include <gmock.h>
+#include <gmock/gmock.h>
 #include <sstream>
 
 #ifdef RUN_REGRESSION

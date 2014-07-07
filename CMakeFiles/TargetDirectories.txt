@@ -1,0 +1,1 @@
+/home/fjanisze/Code/simple_animation_engine/CMakeFiles/animation.dir

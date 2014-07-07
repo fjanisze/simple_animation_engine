@@ -1,5 +1,5 @@
 #include "animation.hpp"
-#include <gmock.h>
+#include <gmock/gmock.h>
 
 class linear_interpolation_test_small : public ::testing::Test
 {
