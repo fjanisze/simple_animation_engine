@@ -138,7 +138,8 @@ namespace animation_engine
     anim_obj_status animated_object::draw(sf::RenderWindow& p_rnd)
     {
 #ifndef RUN_REGRESSION //Not very elegant, but works..
-        if(m_status==anim_obj_status::STATUS_READY)
+		if (m_status != anim_obj_status::STATUS_NOT_READY&&
+			m_status != anim_obj_status::STATUS_FAULTY)
         {
             draw_impl(p_rnd);
         }
@@ -151,8 +152,11 @@ namespace animation_engine
         m_current_time+=m_single_time_increment;
         if(m_current_time>=m_new_position_threshold)
         {
-            m_current_time=0;
-            m_cur_position=get_current_position();
+			double l_diff = m_single_time_increment / m_new_position_threshold;
+			do{
+				m_cur_position = get_current_position();
+			} while (--l_diff > 0);
+			m_current_time = 0;
         }
         return m_cur_position;
     }
