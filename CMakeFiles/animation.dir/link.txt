@@ -1,1 +1,0 @@
-/usr/bin/c++       CMakeFiles/animation.dir/main.cpp.o CMakeFiles/animation.dir/regression.cpp.o CMakeFiles/animation.dir/animation.cpp.o CMakeFiles/animation.dir/animation_engine.cpp.o CMakeFiles/animation.dir/animation_text.cpp.o CMakeFiles/animation.dir/animation_texture.cpp.o  -o animation -rdynamic /usr/src/gmock/libgmock.a 

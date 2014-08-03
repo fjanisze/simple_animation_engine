@@ -208,7 +208,6 @@ namespace animation_engine
         m_current_time=0;
         m_single_time_increment=(double)1/m_refresh_frequency;
         m_new_position_threshold=(double)(m_animation_duration)/object_positions.size();
-		std::cout<<"Ref. freq.:" << m_refresh_frequency << ", Increment: " << m_single_time_increment << ", Threshold: " << m_new_position_threshold << std::endl;
     }
 
     animated_object::~animated_object(){}
