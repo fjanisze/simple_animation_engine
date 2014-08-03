@@ -4,6 +4,8 @@
 #include <mutex>
 #include <thread>
 #include <cmath>
+#include <vector>
+#include <algorithm>
 
 #ifndef ANIM_REFRESH_MECHANISM_HPP
 #define ANIM_REFRESH_MECHANISM_HPP
