@@ -1,7 +1,7 @@
 #include "animation.hpp"
 
 #include <chrono>
-#include <gmock.h>
+#include <gmock/gmock.h>
 #include <sstream>
 
 #ifdef RUN_REGRESSION
@@ -45,7 +45,7 @@ int main()
     animation_engine::anim_text_ptr object=animation_engine::animated_text::create(text);
     object->set_font(std::make_shared<sf::Font>(font));
 #endif
-    animation_engine::animation_engine engine(app,30);
+    animation_engine::animation_engine engine(app,60);
 
     bool begin_point_ready=false;
 
@@ -75,7 +75,7 @@ int main()
                     {
                         object->set_end_position(sf::Vector2f(event.mouseButton.x,event.mouseButton.y));
                         object->prepare_to_render();
-                        std::cout<<"Animation time: "<<object->get_animation_execution_time(30)<<std::endl;
+                        std::cout<<"Animation time: "<<object->get_animation_execution_time(60)<<std::endl;
                         static int multiplier = 1;
                         object->set_animation_duration((float)1/multiplier);
                         multiplier*=2;
@@ -103,8 +103,6 @@ int main()
         if(std::chrono::duration_cast<std::chrono::milliseconds>(time_now-begin_time)>=std::chrono::milliseconds{1000})
         {
             std::cout<<fps_counter<<std::endl;
-            std::stringstream ss;
-            ss<<"fsp: "<<fps_counter;
             fps_counter=0;
             begin_time=time_now;
         }

@@ -20,8 +20,7 @@ namespace animation_engine
         {
             throw std::runtime_error("p_frame_rate<=0");
         }
-        int refresh_rate_speed=p_frame_rate*50;//50 times faster than the frame rate
-        m_refresh->set_refresh_internal_clock_rate(refresh_rate_speed);
+        m_refresh->set_refresh_internal_clock_rate(1000);
         if(!m_refresh->start_internal_refresh_cycle())
         {
             throw std::runtime_error("Unable to start the internal refresh cycle");

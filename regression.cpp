@@ -1,5 +1,5 @@
 #include "animation.hpp"
-#include <gmock.h>
+#include <gmock/gmock.h>
 
 class linear_interpolation_test_small : public ::testing::Test
 {
@@ -332,7 +332,7 @@ struct animation_engine_testsuit : public animation_engine_testsuit_common
 TEST_F(animation_engine_testsuit,create_2anim_obj_and_draw)
 {
     full_construction_and_expectation();
-
+	
     ASSERT_EQ(1,engine->register_object(anim_obj1));
     ASSERT_EQ(2,engine->register_object(anim_obj2));
     ASSERT_EQ(3,engine->register_object(anim_obj2));

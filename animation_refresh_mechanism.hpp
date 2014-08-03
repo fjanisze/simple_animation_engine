@@ -96,7 +96,6 @@ namespace refresh_mechanism //Implementation
     template<typename F_T>
     void animation_engine_refresh<F_T>::refresh_all()
     try{
-        int wait_time_in_us = std::floor(((double)1/m_internal_clock_rate)*1000000);
         while(m_continue_the_cycle)
         {
             if(!m_cycle_pause&&m_observers_mtx.try_lock())
@@ -107,7 +106,7 @@ namespace refresh_mechanism //Implementation
                 }
                 m_observers_mtx.unlock();
             }
-            std::this_thread::sleep_for(std::chrono::microseconds{wait_time_in_us});
+			std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
         }
     }catch(std::exception& xa)
     {

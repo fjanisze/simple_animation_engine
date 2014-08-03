@@ -76,7 +76,6 @@ namespace animation_engine
     void animated_texture::draw_impl(sf::RenderWindow& p_rnd)
     {
         m_sprite->setPosition(m_cur_position);
-        std::cout<<"Drawing: "<<m_cur_position.x<<","<<m_cur_position.y<<std::endl;
         p_rnd.draw(*m_sprite);
     }
 
